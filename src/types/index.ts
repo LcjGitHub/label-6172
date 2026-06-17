@@ -31,6 +31,34 @@ export interface CalcResult {
   }>;
 }
 
+/** 批量换算结果 */
+export interface BatchCalcResult {
+  /** 换算比例系数 */
+  scaleFactor: string;
+  /** 单块成品重量 (g) */
+  singleBlockWeight: string;
+  /** 计划制作块数 */
+  batchCount: number;
+  /** 批量总油重 (g) */
+  totalOilWeight: string;
+  /** 批量扣减前碱量 (g) */
+  lyeBeforeSuperfat: string;
+  /** 批量超脂扣减量 (g) */
+  superfatDeduction: string;
+  /** 批量扣减后碱量 (g) */
+  lyeAmount: string;
+  /** 批量建议水量 (g) */
+  waterAmount: string;
+  /** 批量油脂明细 */
+  oilDetails: Array<{
+    oilId: string;
+    oilName: string;
+    percentage: string;
+    weight: string;
+    lye: string;
+  }>;
+}
+
 /** 已保存的配方 */
 export interface Recipe {
   id: string;

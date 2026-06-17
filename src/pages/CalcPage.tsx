@@ -20,7 +20,7 @@ import {
 } from 'antd';
 import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
-import { buildOilMap, calculateLye, sumPercentages } from '../lib/calc';
+import { buildOilMap, calculateBatch, calculateLye, sumPercentages } from '../lib/calc';
 import { calcFormSchema, type CalcFormValues } from '../schemas/calcSchema';
 import { useRecipeStore } from '../store/recipeStore';
 import type { CalcResult, Oil } from '../types';
@@ -41,6 +41,8 @@ export function CalcPage() {
   const oilMap = useMemo(() => buildOilMap(oils), []);
   const addRecipe = useRecipeStore((s) => s.addRecipe);
   const [result, setResult] = useState<CalcResult | null>(null);
+  const [singleBlockWeight, setSingleBlockWeight] = useState<number | null>(null);
+  const [batchCount, setBatchCount] = useState<number | null>(null);
 
   const {
     control,
@@ -63,6 +65,13 @@ export function CalcPage() {
   const isSumValid = percentageSum.equals(100);
 
   const usedOilIds = watchedOils?.map((o) => o.oilId) ?? [];
+
+  const batchCalcResult = useMemo(() => {
+    if (!result || !singleBlockWeight || !batchCount || singleBlockWeight <= 0 || batchCount <= 0) {
+      return null;
+    }
+    return calculateBatch(result, singleBlockWeight, batchCount);
+  }, [result, singleBlockWeight, batchCount]);
 
   const onCalculate = handleSubmit((values) => {
     const calc = calculateLye(
@@ -338,6 +347,98 @@ export function CalcPage() {
               { title: '贡献碱量 (g)', dataIndex: 'lye', key: 'lye' },
             ]}
           />
+        </Card>
+      )}
+
+      {result && (
+        <Card title="批量换算">
+          <Typography.Paragraph type="secondary">
+            输入单块成品重量与计划制作块数，系统将按比例放大当前配方的各项用量。
+          </Typography.Paragraph>
+          <Row gutter={16} style={{ marginBottom: 24 }}>
+            <Col xs={24} sm={8}>
+              <Form.Item label="单块成品重量（g）">
+                <InputNumber
+                  min={0.01}
+                  precision={2}
+                  style={{ width: '100%' }}
+                  placeholder="例如：100"
+                  value={singleBlockWeight}
+                  onChange={(v) => setSingleBlockWeight(v)}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={8}>
+              <Form.Item label="计划制作块数">
+                <InputNumber
+                  min={1}
+                  precision={0}
+                  style={{ width: '100%' }}
+                  placeholder="例如：10"
+                  value={batchCount}
+                  onChange={(v) => setBatchCount(v)}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {batchCalcResult && (
+            <>
+              <Alert
+                type="info"
+                showIcon
+                message={`换算系数：${batchCalcResult.scaleFactor}（当前配方成品总重 → 目标总重）`}
+                style={{ marginBottom: 16 }}
+              />
+              <Row gutter={24} style={{ marginBottom: 16 }}>
+                <Col xs={24} sm={6}>
+                  <Statistic
+                    title="批量总油重"
+                    value={batchCalcResult.totalOilWeight}
+                    suffix="g"
+                  />
+                </Col>
+                <Col xs={24} sm={6}>
+                  <Statistic
+                    title="批量碱量（最终）"
+                    value={batchCalcResult.lyeAmount}
+                    suffix="g NaOH"
+                    valueStyle={{ color: '#1677ff' }}
+                  />
+                </Col>
+                <Col xs={24} sm={6}>
+                  <Statistic
+                    title="批量建议水量"
+                    value={batchCalcResult.waterAmount}
+                    suffix="g"
+                  />
+                </Col>
+                <Col xs={24} sm={6}>
+                  <Statistic
+                    title="制作总量"
+                    value={batchCalcResult.batchCount}
+                    suffix="块"
+                    prefix={`${batchCalcResult.singleBlockWeight}g ×`}
+                  />
+                </Col>
+              </Row>
+
+              <Divider />
+
+              <Table
+                rowKey="oilId"
+                pagination={false}
+                size="small"
+                dataSource={batchCalcResult.oilDetails}
+                columns={[
+                  { title: '油脂', dataIndex: 'oilName', key: 'oilName' },
+                  { title: '比例', dataIndex: 'percentage', key: 'percentage', render: (v) => `${v}%` },
+                  { title: '批量重量 (g)', dataIndex: 'weight', key: 'weight' },
+                  { title: '批量贡献碱量 (g)', dataIndex: 'lye', key: 'lye' },
+                ]}
+              />
+            </>
+          )}
         </Card>
       )}
     </Space>

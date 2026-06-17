@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import type { CalcResult, Oil, OilRatio } from '../types';
+import type { BatchCalcResult, CalcResult, Oil, OilRatio } from '../types';
 
 /** 水相比例（Mock 简化：碱量的 2.5 倍） */
 const WATER_RATIO = new Decimal('2.5');
@@ -84,4 +84,45 @@ export function calculateLye(
  */
 export function buildOilMap(oils: Oil[]): Map<string, Oil> {
   return new Map(oils.map((oil) => [oil.id, oil]));
+}
+
+export function calculateBatch(
+  calcResult: CalcResult,
+  singleBlockWeight: number,
+  batchCount: number,
+): BatchCalcResult {
+  const currentTotal = new Decimal(calcResult.totalOilWeight)
+    .plus(new Decimal(calcResult.lyeAmount))
+    .plus(new Decimal(calcResult.waterAmount));
+
+  const desiredTotal = new Decimal(singleBlockWeight).mul(batchCount);
+  const scaleFactor = currentTotal.equals(0)
+    ? new Decimal(0)
+    : desiredTotal.div(currentTotal);
+
+  const totalOilWeight = new Decimal(calcResult.totalOilWeight).mul(scaleFactor);
+  const lyeBeforeSuperfat = new Decimal(calcResult.lyeBeforeSuperfat).mul(scaleFactor);
+  const superfatDeduction = new Decimal(calcResult.superfatDeduction).mul(scaleFactor);
+  const lyeAmount = new Decimal(calcResult.lyeAmount).mul(scaleFactor);
+  const waterAmount = new Decimal(calcResult.waterAmount).mul(scaleFactor);
+
+  const oilDetails = calcResult.oilDetails.map((item) => ({
+    oilId: item.oilId,
+    oilName: item.oilName,
+    percentage: item.percentage,
+    weight: new Decimal(item.weight).mul(scaleFactor).toFixed(2),
+    lye: new Decimal(item.lye).mul(scaleFactor).toFixed(3),
+  }));
+
+  return {
+    scaleFactor: scaleFactor.toFixed(6),
+    singleBlockWeight: new Decimal(singleBlockWeight).toFixed(2),
+    batchCount,
+    totalOilWeight: totalOilWeight.toFixed(2),
+    lyeBeforeSuperfat: lyeBeforeSuperfat.toFixed(3),
+    superfatDeduction: superfatDeduction.toFixed(3),
+    lyeAmount: lyeAmount.toFixed(3),
+    waterAmount: waterAmount.toFixed(2),
+    oilDetails,
+  };
 }
