@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   Empty,
+  Input,
   Popconfirm,
   Space,
   Table,
@@ -11,10 +12,11 @@ import {
   Typography,
   message,
 } from 'antd';
-import { CalculatorOutlined, DeleteOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
+import { CalculatorOutlined, DeleteOutlined, DownloadOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
 import { buildOilMap } from '../lib/calc';
 import { exportRecipesToFile, parseImportFile } from '../lib/exportImportUtils';
+import { filterRecipesByName } from '../lib/filterUtils';
 import { useRecipeStore } from '../store/recipeStore';
 import { useCalcLoadStore } from '../store/calcLoadStore';
 import type { AlkaliType, Oil } from '../types';
@@ -36,6 +38,11 @@ export function RecipesPage() {
   const oilMap = useMemo(() => buildOilMap(oils), []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
+  const [keyword, setKeyword] = useState('');
+
+  const filteredRecipes = useMemo(() => {
+    return filterRecipesByName(recipes, keyword);
+  }, [recipes, keyword]);
 
   const formatOils = (oilIds: { oilId: string; percentage: number }[]) =>
     oilIds
@@ -93,21 +100,31 @@ export function RecipesPage() {
       </Typography.Paragraph>
 
       <Card>
-        <Space style={{ marginBottom: 16, width: '100%' }}>
-          <Button
-            icon={<DownloadOutlined />}
-            onClick={handleExport}
-            disabled={recipes.length === 0}
-          >
-            导出全部
-          </Button>
-          <Button
-            icon={<UploadOutlined />}
-            onClick={handleImportClick}
-            loading={importing}
-          >
-            从文件导入
-          </Button>
+        <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
+          <Input
+            allowClear
+            prefix={<SearchOutlined />}
+            placeholder="输入配方名称关键字筛选"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            style={{ maxWidth: 320 }}
+          />
+          <Space>
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={handleExport}
+              disabled={recipes.length === 0}
+            >
+              导出全部
+            </Button>
+            <Button
+              icon={<UploadOutlined />}
+              onClick={handleImportClick}
+              loading={importing}
+            >
+              从文件导入
+            </Button>
+          </Space>
           <input
             ref={fileInputRef}
             type="file"
@@ -116,12 +133,21 @@ export function RecipesPage() {
             onChange={handleFileChange}
           />
         </Space>
+
+        <Space style={{ marginBottom: 16, width: '100%' }}>
+          <Typography.Text type="secondary">
+            共 {filteredRecipes.length} / {recipes.length} 条
+          </Typography.Text>
+        </Space>
+
         {recipes.length === 0 ? (
           <Empty description="暂无保存的配方，请前往计算器保存" />
+        ) : filteredRecipes.length === 0 ? (
+          <Empty description="未找到匹配的配方，请尝试其他关键字" />
         ) : (
           <Table
             rowKey="id"
-            dataSource={recipes}
+            dataSource={filteredRecipes}
             pagination={{ pageSize: 10, showSizeChanger: false }}
             columns={[
               {
