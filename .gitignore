@@ -115,6 +115,9 @@ tmp/
 .vercel/
 .netlify/
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Archives (optional local bundles)
 *.zip
 *.tar

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Card,
+  Empty,
   Input,
   Space,
   Table,
@@ -48,28 +49,32 @@ export function OilsLibraryPage() {
           </Typography.Text>
         </Space>
 
-        <Table
-          rowKey="id"
-          dataSource={filteredOils}
-          pagination={false}
-          columns={[
-            {
-              title: '油脂名称',
-              dataIndex: 'name',
-              key: 'name',
-              render: (name: string) => <Typography.Text strong>{name}</Typography.Text>,
-            },
-            {
-              title: '皂化值（SAP 值）',
-              dataIndex: 'sapValue',
-              key: 'sapValue',
-              width: 240,
-              render: (v: number) => (
-                <Typography.Text code>{v} g NaOH / g 油脂</Typography.Text>
-              ),
-            },
-          ]}
-        />
+        {filteredOils.length === 0 && keyword.trim() ? (
+          <Empty description="未找到匹配的油脂，请尝试其他关键字" />
+        ) : (
+          <Table
+            rowKey="id"
+            dataSource={filteredOils}
+            pagination={false}
+            columns={[
+              {
+                title: '油脂名称',
+                dataIndex: 'name',
+                key: 'name',
+                render: (name: string) => <Typography.Text strong>{name}</Typography.Text>,
+              },
+              {
+                title: '皂化值（SAP 值）',
+                dataIndex: 'sapValue',
+                key: 'sapValue',
+                width: 240,
+                render: (v: number) => (
+                  <Typography.Text code>{v} g NaOH / g 油脂</Typography.Text>
+                ),
+              },
+            ]}
+          />
+        )}
       </Card>
     </Space>
   );
