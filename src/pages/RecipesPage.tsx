@@ -96,19 +96,24 @@ export function RecipesPage() {
         配方列表
       </Typography.Title>
       <Typography.Paragraph type="secondary">
-        已保存的配方会持久化到本地，可随时查看或删除。支持「导出全部」将配方导出为数据备份文件，或「从文件导入」将备份中的配方合并写入本地（同名配方将被跳过）。
+        已保存的配方会持久化到本地，可随时查看或删除。支持按配方名称关键字实时筛选，支持「导出全部」将配方导出为数据备份文件，或「从文件导入」将备份中的配方合并写入本地（同名配方将被跳过）。
       </Typography.Paragraph>
 
       <Card>
         <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
-          <Input
-            allowClear
-            prefix={<SearchOutlined />}
-            placeholder="输入配方名称关键字筛选"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            style={{ maxWidth: 320 }}
-          />
+          <Space>
+            <Input
+              allowClear
+              prefix={<SearchOutlined />}
+              placeholder="输入配方名称关键字筛选"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              style={{ maxWidth: 320 }}
+            />
+            <Typography.Text type="secondary">
+              共 {filteredRecipes.length} / {recipes.length} 条
+            </Typography.Text>
+          </Space>
           <Space>
             <Button
               icon={<DownloadOutlined />}
@@ -132,12 +137,6 @@ export function RecipesPage() {
             style={{ display: 'none' }}
             onChange={handleFileChange}
           />
-        </Space>
-
-        <Space style={{ marginBottom: 16, width: '100%' }}>
-          <Typography.Text type="secondary">
-            共 {filteredRecipes.length} / {recipes.length} 条
-          </Typography.Text>
         </Space>
 
         {recipes.length === 0 ? (

@@ -117,9 +117,12 @@ tmp/
 
 # TypeScript incremental build cache
 *.tsbuildinfo
+tsconfig.tsbuildinfo
+tsconfig.*.tsbuildinfo
 
 # Vite
 .vite/
+.vite-inspector/
 
 # Archives (optional local bundles)
 *.zip
