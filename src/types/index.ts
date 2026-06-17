@@ -36,7 +36,8 @@ export interface Recipe {
   id: string;
   name: string;
   totalOilWeight: number;
-  superfatPercentage: number;
+  /** 超脂比例，旧数据可能缺失该字段 */
+  superfatPercentage?: number;
   oils: OilRatio[];
   lyeAmount: string;
   waterAmount: string;

@@ -104,7 +104,7 @@ export function CalcPage() {
         碱量计算器
       </Typography.Title>
       <Typography.Paragraph type="secondary">
-        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算氢氧化钠用量。
+        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算氢氧化钠用量。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应氢氧化钠，使成品保留更多未皂化油脂，滋润肌肤。
       </Typography.Paragraph>
 
       <Card title="配方参数">
@@ -298,7 +298,7 @@ export function CalcPage() {
                 value={result.superfatDeduction}
                 suffix="g"
                 valueStyle={{ color: '#fa8c16' }}
-                prefix="-"
+                prefix={parseFloat(result.superfatDeduction) > 0 ? '-' : undefined}
               />
             </Col>
             <Col xs={24} sm={8}>

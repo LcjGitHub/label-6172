@@ -17,9 +17,20 @@ export const calcFormSchema = z
       .number({ invalid_type_error: '请输入总油重' })
       .min(1, '总油重须大于 0'),
     superfatPercentage: z
-      .number({ invalid_type_error: '请输入超脂比例' })
-      .min(0, '超脂比例不能小于 0')
-      .max(20, '超脂比例不能超过 20'),
+      .union([z.number(), z.null(), z.nan()], {
+        invalid_type_error: '请输入超脂比例',
+        required_error: '请输入超脂比例',
+      })
+      .refine((v) => v !== null && !Number.isNaN(v), {
+        message: '请输入超脂比例',
+      })
+      .transform((v) => v as number)
+      .pipe(
+        z
+          .number()
+          .min(0, '超脂比例不能小于 0，范围 0% ~ 20%')
+          .max(20, '超脂比例不能超过 20，范围 0% ~ 20%'),
+      ),
     oils: z.array(oilRatioSchema).min(1, '至少选择一种油脂'),
   })
   .superRefine((data, ctx) => {

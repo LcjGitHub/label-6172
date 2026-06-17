@@ -68,9 +68,12 @@ export function RecipesPage() {
                 title: '超脂比例',
                 dataIndex: 'superfatPercentage',
                 key: 'superfatPercentage',
-                render: (v: number) => (
-                  <Tag color="orange">{v}%</Tag>
-                ),
+                render: (v: number | undefined) => {
+                  if (v === undefined || v === null || Number.isNaN(v)) {
+                    return <Tag>未设置</Tag>;
+                  }
+                  return <Tag color="orange">{v}%</Tag>;
+                },
               },
               {
                 title: '油脂配比',
