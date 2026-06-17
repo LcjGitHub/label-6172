@@ -59,6 +59,8 @@ export function RecipesPage() {
         message.warning(
           `导入完成：全部 ${result.skippedCount} 个配方因名称重复被跳过`,
         );
+      } else if (result.skippedCount === 0) {
+        message.success(`导入完成：成功导入 ${result.importedCount} 个`);
       } else {
         message.success(
           `导入完成：成功导入 ${result.importedCount} 个，跳过 ${result.skippedCount} 个重复`,
@@ -80,7 +82,7 @@ export function RecipesPage() {
         配方列表
       </Typography.Title>
       <Typography.Paragraph type="secondary">
-        已保存的配方会持久化到本地，可随时查看或删除。支持「导出全部」将配方导出为 JSON 备份文件，或「从文件导入」将备份中的配方合并写入本地（同名配方将被跳过）。
+        已保存的配方会持久化到本地，可随时查看或删除。支持「导出全部」将配方导出为数据备份文件，或「从文件导入」将备份中的配方合并写入本地（同名配方将被跳过）。
       </Typography.Paragraph>
 
       <Card>
