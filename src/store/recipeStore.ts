@@ -22,6 +22,7 @@ interface RecipeState {
     options?: SaveRecipeOptions,
   ) => SaveRecipeResult;
   removeRecipe: (id: string) => void;
+  duplicateRecipe: (id: string) => Recipe | null;
   importRecipes: (incoming: Recipe[]) => MergeResult;
 }
 
@@ -107,6 +108,20 @@ export const useRecipeStore = create<RecipeState>()(
         set((state) => ({
           recipes: state.recipes.filter((r) => r.id !== id),
         })),
+      duplicateRecipe: (id) => {
+        const source = get().recipes.find((r) => r.id === id);
+        if (!source) return null;
+        const copy: Recipe = {
+          ...source,
+          id: crypto.randomUUID(),
+          name: `${source.name}副本`,
+          createdAt: new Date().toISOString(),
+        };
+        set((state) => ({
+          recipes: [copy, ...state.recipes],
+        }));
+        return copy;
+      },
       importRecipes: (incoming) => {
         const existing = get().recipes;
         const result = mergeRecipes(existing, incoming);

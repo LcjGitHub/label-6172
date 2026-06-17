@@ -13,7 +13,7 @@ import {
   Typography,
   message,
 } from 'antd';
-import { CalculatorOutlined, DeleteOutlined, DownloadOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
+import { CalculatorOutlined, CopyOutlined, DeleteOutlined, DownloadOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
 import { buildOilMap } from '../lib/calc';
 import { exportRecipesToFile, parseImportFile } from '../lib/exportImportUtils';
@@ -34,6 +34,7 @@ export function RecipesPage() {
   const navigate = useNavigate();
   const recipes = useRecipeStore((s) => s.recipes);
   const removeRecipe = useRecipeStore((s) => s.removeRecipe);
+  const duplicateRecipe = useRecipeStore((s) => s.duplicateRecipe);
   const importRecipes = useRecipeStore((s) => s.importRecipes);
   const setLoadedRecipe = useCalcLoadStore((s) => s.setLoadedRecipe);
   const oilMap = useMemo(() => buildOilMap(oils), []);
@@ -259,6 +260,18 @@ export function RecipesPage() {
                       }}
                     >
                       载入计算器
+                    </Button>
+                    <Button
+                      size="small"
+                      icon={<CopyOutlined />}
+                      onClick={() => {
+                        const copy = duplicateRecipe(record.id);
+                        if (copy) {
+                          message.success(`已复制配方「${copy.name}」`);
+                        }
+                      }}
+                    >
+                      复制配方
                     </Button>
                     <Popconfirm
                       title="确认删除该配方？"
