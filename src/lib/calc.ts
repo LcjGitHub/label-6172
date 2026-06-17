@@ -1,5 +1,6 @@
 import Decimal from 'decimal.js';
-import type { BatchCalcResult, CalcResult, Oil, OilRatio } from '../types';
+import type { AlkaliType, BatchCalcResult, CalcResult, Oil, OilRatio } from '../types';
+import { KOH_CONVERSION_FACTOR } from '../types';
 
 /** 水相比例（Mock 简化：碱量的 2.5 倍） */
 const WATER_RATIO = new Decimal('2.5');
@@ -31,19 +32,23 @@ export function sumPercentages(oils: OilRatio[]): Decimal {
  * 按 Mock 皂化值计算碱量（含超脂扣减）
  * 公式：碱量(g) = Σ(油脂重量 × 皂化值)，油脂重量 = 总油重 × 比例%
  * 超脂扣减：最终碱量 = 原始碱量 × (1 - 超脂比例%)
+ * KOH 模式：KOH 用量 = NaOH 用量 × 0.7
  * @param totalOilWeight - 总油脂重量（g）
  * @param oils - 油脂配比
  * @param oilMap - 油脂字典
  * @param superfatPercentage - 超脂比例（%，0-20）
+ * @param alkaliType - 碱类型（NaOH 或 KOH），默认 NaOH
  */
 export function calculateLye(
   totalOilWeight: number,
   oils: OilRatio[],
   oilMap: Map<string, Oil>,
   superfatPercentage: number = 0,
+  alkaliType: AlkaliType = 'NaOH',
 ): CalcResult {
   const total = new Decimal(totalOilWeight);
   const superfatPct = new Decimal(superfatPercentage);
+  const conversionFactor = alkaliType === 'KOH' ? new Decimal(KOH_CONVERSION_FACTOR) : new Decimal(1);
   let totalLye = new Decimal(0);
 
   const oilDetails = oils.map((item) => {
@@ -51,7 +56,7 @@ export function calculateLye(
     const pct = new Decimal(item.percentage);
     const weight = total.mul(pct).div(100);
     const sap = new Decimal(oil?.sapValue ?? 0);
-    const lye = weight.mul(sap);
+    const lye = weight.mul(sap).mul(conversionFactor);
     totalLye = totalLye.plus(lye);
 
     return {
@@ -69,6 +74,7 @@ export function calculateLye(
   const waterAmount = finalLye.mul(WATER_RATIO);
 
   return {
+    alkaliType,
     totalOilWeight: total.toFixed(2),
     lyeBeforeSuperfat: lyeBeforeSuperfat.toFixed(3),
     superfatDeduction: superfatDeduction.toFixed(3),
@@ -123,6 +129,7 @@ export function calculateBatch(
   }));
 
   return {
+    alkaliType: calcResult.alkaliType,
     scaleFactor: scaleFactor.toFixed(6),
     currentTotalWeight: currentTotal.toFixed(2),
     targetTotalWeight: desiredTotal.toFixed(2),

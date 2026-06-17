@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import {
@@ -11,6 +11,7 @@ import {
   Form,
   Input,
   InputNumber,
+  Radio,
   Row,
   Select,
   Space,
@@ -24,11 +25,12 @@ import oilsData from '../mock/oils.json';
 import { buildOilMap, calculateBatch, calculateLye, sumPercentages } from '../lib/calc';
 import { calcFormSchema, type CalcFormValues } from '../schemas/calcSchema';
 import { useRecipeStore } from '../store/recipeStore';
-import type { CalcResult, Oil } from '../types';
+import type { AlkaliType, CalcResult, Oil } from '../types';
 
 const oils = oilsData as Oil[];
 
 const defaultValues: CalcFormValues = {
+  alkaliType: 'NaOH',
   recipeName: '',
   totalOilWeight: 500,
   superfatPercentage: 5,
@@ -49,6 +51,7 @@ export function CalcPage() {
     control,
     handleSubmit,
     watch,
+    getValues,
     formState: { errors },
   } = useForm<CalcFormValues>({
     resolver: zodResolver(calcFormSchema),
@@ -62,10 +65,36 @@ export function CalcPage() {
   });
 
   const watchedOils = watch('oils');
+  const watchedAlkaliType = watch('alkaliType');
   const percentageSum = sumPercentages(watchedOils ?? []);
   const isSumValid = percentageSum.equals(100);
 
   const usedOilIds = watchedOils?.map((o) => o.oilId) ?? [];
+
+  useEffect(() => {
+    if (result) {
+      const values = getValues();
+      if (
+        values.totalOilWeight &&
+        values.oils &&
+        values.oils.length > 0 &&
+        values.superfatPercentage !== undefined &&
+        values.superfatPercentage !== null
+      ) {
+        const calc = calculateLye(
+          values.totalOilWeight,
+          values.oils,
+          oilMap,
+          values.superfatPercentage,
+          values.alkaliType,
+        );
+        setResult(calc);
+      }
+    }
+  }, [watchedAlkaliType, result, getValues, oilMap]);
+
+  const alkaliLabel = (type: AlkaliType) => (type === 'NaOH' ? '氢氧化钠' : '氢氧化钾');
+  const alkaliSuffix = (type: AlkaliType) => (type === 'NaOH' ? 'g NaOH' : 'g KOH');
 
   const batchCalcResult = useMemo(() => {
     if (!result || !singleBlockWeight || !batchCount || singleBlockWeight <= 0 || batchCount <= 0) {
@@ -80,6 +109,7 @@ export function CalcPage() {
       values.oils,
       oilMap,
       values.superfatPercentage,
+      values.alkaliType,
     );
     setResult(calc);
     message.success('计算完成');
@@ -91,6 +121,7 @@ export function CalcPage() {
       values.oils,
       oilMap,
       values.superfatPercentage,
+      values.alkaliType,
     );
     const name = values.recipeName?.trim();
     if (!name) {
@@ -101,6 +132,7 @@ export function CalcPage() {
       name,
       totalOilWeight: values.totalOilWeight,
       superfatPercentage: values.superfatPercentage,
+      alkaliType: values.alkaliType,
       oils: values.oils,
       lyeAmount: calc.lyeAmount,
       waterAmount: calc.waterAmount,
@@ -114,11 +146,27 @@ export function CalcPage() {
         碱量计算器
       </Typography.Title>
       <Typography.Paragraph type="secondary">
-        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算氢氧化钠用量。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应氢氧化钠，使成品保留更多未皂化油脂，滋润肌肤。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、氢氧化钠、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
+        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算碱用量。支持氢氧化钠（NaOH）和氢氧化钾（KOH）两种碱类型，氢氧化钾用量 = 氢氧化钠用量 × 0.7。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
       </Typography.Paragraph>
 
       <Card title="配方参数">
         <Form layout="vertical" onFinish={onCalculate}>
+          <Row gutter={16}>
+            <Col xs={24}>
+              <Form.Item label="碱类型" required>
+                <Controller
+                  name="alkaliType"
+                  control={control}
+                  render={({ field }) => (
+                    <Radio.Group {...field}>
+                      <Radio value="NaOH">氢氧化钠（NaOH）</Radio>
+                      <Radio value="KOH">氢氧化钾（KOH，用量 = NaOH × 0.7）</Radio>
+                    </Radio.Group>
+                  )}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
@@ -293,13 +341,13 @@ export function CalcPage() {
       </Card>
 
       {result && (
-        <Card title="计算结果">
+        <Card title={`计算结果（${alkaliLabel(result.alkaliType)}）`}>
           <Row gutter={24} style={{ marginBottom: 16 }}>
             <Col xs={24} sm={8}>
               <Statistic
-                title="扣减前碱量"
+                title={`扣减前${alkaliLabel(result.alkaliType)}量`}
                 value={result.lyeBeforeSuperfat}
-                suffix="g NaOH"
+                suffix={alkaliSuffix(result.alkaliType)}
               />
             </Col>
             <Col xs={24} sm={8}>
@@ -313,9 +361,9 @@ export function CalcPage() {
             </Col>
             <Col xs={24} sm={8}>
               <Statistic
-                title="扣减后碱量（最终）"
+                title={`扣减后${alkaliLabel(result.alkaliType)}量（最终）`}
                 value={result.lyeAmount}
-                suffix="g NaOH"
+                suffix={alkaliSuffix(result.alkaliType)}
                 valueStyle={{ color: '#1677ff', fontWeight: 600 }}
               />
             </Col>
@@ -345,7 +393,7 @@ export function CalcPage() {
               { title: '油脂', dataIndex: 'oilName', key: 'oilName' },
               { title: '比例', dataIndex: 'percentage', key: 'percentage', render: (v) => `${v}%` },
               { title: '重量 (g)', dataIndex: 'weight', key: 'weight' },
-              { title: '贡献碱量 (g)', dataIndex: 'lye', key: 'lye' },
+              { title: `贡献${alkaliLabel(result.alkaliType)}量 (g)`, dataIndex: 'lye', key: 'lye' },
             ]}
           />
         </Card>
@@ -394,9 +442,9 @@ export function CalcPage() {
               <Row gutter={24} style={{ marginBottom: 16 }}>
                 <Col xs={24} sm={8}>
                   <Statistic
-                    title="批量扣减前碱量"
+                    title={`批量扣减前${alkaliLabel(batchCalcResult.alkaliType)}量`}
                     value={batchCalcResult.lyeBeforeSuperfat}
-                    suffix="g NaOH"
+                    suffix={alkaliSuffix(batchCalcResult.alkaliType)}
                   />
                 </Col>
                 <Col xs={24} sm={8}>
@@ -410,9 +458,9 @@ export function CalcPage() {
                 </Col>
                 <Col xs={24} sm={8}>
                   <Statistic
-                    title="批量扣减后碱量（最终）"
+                    title={`批量扣减后${alkaliLabel(batchCalcResult.alkaliType)}量（最终）`}
                     value={batchCalcResult.lyeAmount}
-                    suffix="g NaOH"
+                    suffix={alkaliSuffix(batchCalcResult.alkaliType)}
                     valueStyle={{ color: '#1677ff', fontWeight: 600 }}
                   />
                 </Col>
@@ -453,7 +501,7 @@ export function CalcPage() {
                   { title: '油脂', dataIndex: 'oilName', key: 'oilName' },
                   { title: '比例', dataIndex: 'percentage', key: 'percentage', render: (v) => `${v}%` },
                   { title: '批量重量 (g)', dataIndex: 'weight', key: 'weight' },
-                  { title: '批量贡献碱量 (g)', dataIndex: 'lye', key: 'lye' },
+                  { title: `批量贡献${alkaliLabel(batchCalcResult.alkaliType)}量 (g)`, dataIndex: 'lye', key: 'lye' },
                 ]}
               />
             </>

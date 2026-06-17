@@ -1,3 +1,9 @@
+/** 碱类型 */
+export type AlkaliType = 'NaOH' | 'KOH';
+
+/** 氢氧化钾折算系数：KOH 用量 = NaOH 用量 × 0.7 */
+export const KOH_CONVERSION_FACTOR = 0.7;
+
 /** Mock 油脂定义 */
 export interface Oil {
   id: string;
@@ -14,6 +20,8 @@ export interface OilRatio {
 
 /** 计算结果 */
 export interface CalcResult {
+  /** 碱类型 */
+  alkaliType: AlkaliType;
   totalOilWeight: string;
   /** 扣减前碱量（按皂化值算出的原始碱量） */
   lyeBeforeSuperfat: string;
@@ -33,6 +41,8 @@ export interface CalcResult {
 
 /** 批量换算结果 */
 export interface BatchCalcResult {
+  /** 碱类型 */
+  alkaliType: AlkaliType;
   /** 换算比例系数 */
   scaleFactor: string;
   /** 当前配方成品总重 (g) */
@@ -70,6 +80,8 @@ export interface Recipe {
   totalOilWeight: number;
   /** 超脂比例，旧数据可能缺失该字段 */
   superfatPercentage?: number;
+  /** 碱类型，旧数据可能缺失该字段，默认为 NaOH */
+  alkaliType?: AlkaliType;
   oils: OilRatio[];
   lyeAmount: string;
   waterAmount: string;

@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+/** 碱类型校验 */
+const alkaliTypeSchema = z.enum(['NaOH', 'KOH']);
+
 /** 单条油脂配比校验 */
 export const oilRatioSchema = z.object({
   oilId: z.string().min(1, '请选择油脂'),
@@ -12,6 +15,7 @@ export const oilRatioSchema = z.object({
 /** 计算器表单校验 */
 export const calcFormSchema = z
   .object({
+    alkaliType: alkaliTypeSchema.default('NaOH'),
     recipeName: z.string().optional(),
     totalOilWeight: z
       .number({ invalid_type_error: '请输入总油重' })

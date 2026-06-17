@@ -15,9 +15,12 @@ import oilsData from '../mock/oils.json';
 import { buildOilMap } from '../lib/calc';
 import { exportRecipesToFile, parseImportFile } from '../lib/exportImportUtils';
 import { useRecipeStore } from '../store/recipeStore';
-import type { Oil } from '../types';
+import type { AlkaliType, Oil } from '../types';
 
 const oils = oilsData as Oil[];
+
+const alkaliLabel = (type: AlkaliType | undefined) =>
+  type === 'KOH' ? 'KOH' : 'NaOH';
 
 /**
  * 配方列表页面
@@ -154,7 +157,11 @@ export function RecipesPage() {
                 title: '碱量',
                 dataIndex: 'lyeAmount',
                 key: 'lyeAmount',
-                render: (v: string) => <Tag color="blue">{v} g NaOH</Tag>,
+                render: (v: string, record: any) => (
+                  <Tag color="blue">
+                    {v} g {alkaliLabel(record.alkaliType)}
+                  </Tag>
+                ),
               },
               {
                 title: '水量',
@@ -171,7 +178,7 @@ export function RecipesPage() {
               {
                 title: '操作',
                 key: 'action',
-                render: (_: unknown, record: { id: string; name: string }) => (
+                render: (_: unknown, record: any) => (
                   <Popconfirm
                     title="确认删除该配方？"
                     description={record.name}
