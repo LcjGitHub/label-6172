@@ -152,6 +152,41 @@ export function CalcPage() {
     message.success('计算完成');
   });
 
+  const showNameConflictModal = (
+    name: string,
+    existingId: string,
+    recipeData: Parameters<typeof saveRecipe>[0],
+    onSuccess?: () => void,
+  ) => {
+    Modal.confirm({
+      title: '配方名称已存在',
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <Space direction="vertical">
+          <div>已存在同名配方「{name}」，是否覆盖？</div>
+          <Tag color="orange">选择「覆盖」将更新原有配方数据</Tag>
+        </Space>
+      ),
+      okText: '覆盖保存',
+      okButtonProps: { danger: true },
+      cancelText: '另存为新配方',
+      onOk: () => {
+        saveRecipe(recipeData, { overwriteId: existingId });
+        clearLoadedRecipe();
+        appliedLoadedRef.current = false;
+        message.success(`配方「${name}」已覆盖更新`);
+        onSuccess?.();
+      },
+      onCancel: () => {
+        saveRecipe(recipeData);
+        clearLoadedRecipe();
+        appliedLoadedRef.current = false;
+        message.success(`配方「${name}」已另存为新配方`);
+        onSuccess?.();
+      },
+    });
+  };
+
   const onSave = handleSubmit((values) => {
     const calc = calculateLye(
       values.totalOilWeight,
@@ -178,46 +213,38 @@ export function CalcPage() {
 
     const recipes = useRecipeStore.getState().recipes;
     const existingByName = recipes.find((r) => r.name === name);
-    const isSourceMatch = sourceRecipeId && existingByName?.id === sourceRecipeId;
+    const isSelfByName = sourceRecipeId && existingByName?.id === sourceRecipeId;
 
     if (sourceRecipeId) {
-      const result = saveRecipe(recipeData, { overwriteId: sourceRecipeId });
+      const sourceRecipe = recipes.find((r) => r.id === sourceRecipeId);
+      const nameChanged = sourceRecipe && sourceRecipe.name !== name;
+
+      if (!nameChanged || isSelfByName) {
+        saveRecipe(recipeData, { overwriteId: sourceRecipeId });
+        clearLoadedRecipe();
+        appliedLoadedRef.current = false;
+        message.success(`配方「${name}」已保存`);
+        return;
+      }
+
+      if (existingByName && existingByName.id !== sourceRecipeId) {
+        showNameConflictModal(name, existingByName.id, recipeData);
+        return;
+      }
+
+      saveRecipe(recipeData, { overwriteId: sourceRecipeId });
       clearLoadedRecipe();
       appliedLoadedRef.current = false;
-      message.success(
-        result.type === 'updated' ? `配方「${name}」已覆盖更新` : `配方「${name}」已保存`,
-      );
+      message.success(`配方「${name}」已保存`);
       return;
     }
 
-    if (existingByName && !isSourceMatch) {
-      Modal.confirm({
-        title: '配方名称已存在',
-        icon: <ExclamationCircleOutlined />,
-        content: (
-          <Space direction="vertical">
-            <div>已存在同名配方「{name}」，是否覆盖？</div>
-            <Tag color="orange">选择「覆盖」将更新原有配方数据</Tag>
-          </Space>
-        ),
-        okText: '覆盖保存',
-        okButtonProps: { danger: true },
-        cancelText: '另存为新配方',
-        onOk: () => {
-          saveRecipe(recipeData, { overwriteId: existingByName.id });
-          message.success(`配方「${name}」已覆盖更新`);
-        },
-        onCancel: () => {
-          saveRecipe(recipeData);
-          message.success(`配方「${name}」已另存为新配方`);
-        },
-      });
+    if (existingByName) {
+      showNameConflictModal(name, existingByName.id, recipeData);
       return;
     }
 
     saveRecipe(recipeData);
-    clearLoadedRecipe();
-    appliedLoadedRef.current = false;
     message.success('配方已保存');
   });
 
@@ -236,7 +263,7 @@ export function CalcPage() {
               <span>
                 已载入配方：<strong>{loadedRecipe.recipeName}</strong>
               </span>
-              <Tag color="blue">总油重 {loadedRecipe.totalOilWeight} g</Tag>
+              <Tag color="blue">总油重 {loadedRecipe.totalOilWeight} 克</Tag>
               <Tag color="orange">超脂 {loadedRecipe.superfatPercentage}%</Tag>
               <Tag color="green">
                 碱类型 {loadedRecipe.alkaliType === 'NaOH' ? '氢氧化钠' : '氢氧化钾'}
@@ -250,7 +277,10 @@ export function CalcPage() {
               onClick={() => {
                 clearLoadedRecipe();
                 appliedLoadedRef.current = false;
-                message.info('已取消载入状态');
+                reset(defaultValues);
+                setResult(null);
+                hasResultRef.current = false;
+                message.info('已取消载入状态，表单已恢复默认值');
               }}
             >
               取消载入
@@ -260,7 +290,7 @@ export function CalcPage() {
       )}
 
       <Typography.Paragraph type="secondary">
-        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算碱用量。支持氢氧化钠和氢氧化钾两种碱类型，氢氧化钾用量 = 氢氧化钠用量 × 0.7。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
+        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算碱用量。支持氢氧化钠和氢氧化钾两种碱类型，氢氧化钾用量 = 氢氧化钠用量 × 0.7。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。您也可以从「配方列表」页点击「载入计算器」，将已有配方的名称、总油重、油脂配比等自动预填到本页表单，在此基础上修改后重新计算或保存。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
       </Typography.Paragraph>
 
       <Card title="配方参数">

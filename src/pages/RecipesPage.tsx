@@ -193,7 +193,7 @@ export function RecipesPage() {
                           {
                             recipeName: record.name,
                             totalOilWeight: record.totalOilWeight,
-                            superfatPercentage: record.superfatPercentage ?? 5,
+                            superfatPercentage: record.superfatPercentage ?? 0,
                             alkaliType: record.alkaliType ?? 'NaOH',
                             oils: record.oils,
                           },
