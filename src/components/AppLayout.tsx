@@ -1,6 +1,7 @@
 import { Layout, Menu, Typography } from 'antd';
 import {
   CalculatorOutlined,
+  DatabaseOutlined,
   UnorderedListOutlined,
 } from '@ant-design/icons';
 import { Link, Outlet, useLocation } from 'react-router-dom';
@@ -12,9 +13,12 @@ const { Header, Content } = Layout;
  */
 export function AppLayout() {
   const location = useLocation();
-  const selectedKey = location.pathname.startsWith('/recipes')
-    ? '/recipes'
-    : '/calc';
+  let selectedKey = '/calc';
+  if (location.pathname.startsWith('/recipes')) {
+    selectedKey = '/recipes';
+  } else if (location.pathname.startsWith('/oils')) {
+    selectedKey = '/oils';
+  }
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -39,6 +43,11 @@ export function AppLayout() {
               key: '/calc',
               icon: <CalculatorOutlined />,
               label: <Link to="/calc">计算器</Link>,
+            },
+            {
+              key: '/oils',
+              icon: <DatabaseOutlined />,
+              label: <Link to="/oils">油脂库</Link>,
             },
             {
               key: '/recipes',
