@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/applayout.tsx","./src/lib/calc.ts","./src/pages/calcpage.tsx","./src/pages/recipespage.tsx","./src/schemas/calcschema.ts","./src/store/recipestore.ts","./src/types/index.ts"],"version":"5.9.3"}

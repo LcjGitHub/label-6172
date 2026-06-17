@@ -1,0 +1,12 @@
+[
+  { "id": "olive", "name": "橄榄油", "sapValue": 0.135 },
+  { "id": "coconut", "name": "椰子油", "sapValue": 0.183 },
+  { "id": "palm", "name": "棕榈油", "sapValue": 0.142 },
+  { "id": "shea", "name": "乳木果油", "sapValue": 0.128 },
+  { "id": "castor", "name": "蓖麻油", "sapValue": 0.128 },
+  { "id": "sunflower", "name": "葵花籽油", "sapValue": 0.134 },
+  { "id": "avocado", "name": "牛油果油", "sapValue": 0.133 },
+  { "id": "sweet-almond", "name": "甜杏仁油", "sapValue": 0.136 },
+  { "id": "grapeseed", "name": "葡萄籽油", "sapValue": 0.126 },
+  { "id": "rice-bran", "name": "米糠油", "sapValue": 0.128 }
+]
