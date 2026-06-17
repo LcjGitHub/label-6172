@@ -93,6 +93,38 @@ export function buildOilMap(oils: Oil[]): Map<string, Oil> {
 }
 
 /**
+ * 将油脂比例平均分配，使合计恰好为 100%
+ * 每项保留两位小数，末项用余数补齐以避免合计偏差
+ * @param oils - 油脂配比列表
+ */
+export function evenlyDistributePercentages(oils: OilRatio[]): OilRatio[] {
+  if (!oils || oils.length < 2) {
+    return oils ?? [];
+  }
+  const n = oils.length;
+  const total = new Decimal(100);
+  const baseValue = total.div(n).toDecimalPlaces(2, Decimal.ROUND_FLOOR);
+  const result: OilRatio[] = [];
+  let accumulated = new Decimal(0);
+
+  for (let i = 0; i < n - 1; i++) {
+    result.push({
+      oilId: oils[i].oilId,
+      percentage: baseValue.toNumber(),
+    });
+    accumulated = accumulated.plus(baseValue);
+  }
+
+  const remainder = total.minus(accumulated).toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+  result.push({
+    oilId: oils[n - 1].oilId,
+    percentage: remainder.toNumber(),
+  });
+
+  return result;
+}
+
+/**
  * 按单块成品重量与计划制作块数进行批量换算
  * 根据当前配方的成品总重（油 + 碱 + 水）与目标总重（单块重量 × 块数）
  * 计算换算系数，并等比放大所有用量字段，全程使用 decimal.js 保证高精度。

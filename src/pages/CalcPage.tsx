@@ -24,7 +24,7 @@ import {
 } from 'antd';
 import { DeleteOutlined, ExclamationCircleOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
-import { buildOilMap, calculateBatch, calculateLye, sumPercentages } from '../lib/calc';
+import { buildOilMap, calculateBatch, calculateLye, evenlyDistributePercentages, sumPercentages } from '../lib/calc';
 import { calcFormSchema, type CalcFormValues } from '../schemas/calcSchema';
 import { useRecipeStore } from '../store/recipeStore';
 import { useCalcLoadStore } from '../store/calcLoadStore';
@@ -63,6 +63,7 @@ export function CalcPage() {
     getValues,
     reset,
     setValue,
+    trigger,
     formState: { errors },
   } = useForm<CalcFormValues>({
     resolver: zodResolver(calcFormSchema),
@@ -251,6 +252,18 @@ export function CalcPage() {
     message.success('配方已保存');
   });
 
+  const onEvenDistribute = () => {
+    const currentOils = getValues('oils');
+    if (!currentOils || currentOils.length < 2) {
+      message.warning('至少添加两种及以上油脂后方可均分比例');
+      return;
+    }
+    const distributed = evenlyDistributePercentages(currentOils);
+    setValue('oils', distributed, { shouldDirty: true, shouldTouch: true });
+    trigger('oils');
+    message.success('比例已均分，合计为 100%');
+  };
+
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <Typography.Title level={3} style={{ margin: 0 }}>
@@ -262,7 +275,7 @@ export function CalcPage() {
           type="info"
           showIcon
           message={
-            <Space>
+            <Space wrap>
               <span>
                 已载入配方：<strong>{loadedRecipe.recipeName}</strong>
               </span>
@@ -271,6 +284,9 @@ export function CalcPage() {
               <Tag color="green">
                 碱类型 {loadedRecipe.alkaliType === 'NaOH' ? '氢氧化钠' : '氢氧化钾'}
               </Tag>
+              {loadedRecipe.recipeNotes && loadedRecipe.recipeNotes.trim() && (
+                <Tag color="purple">备注：{loadedRecipe.recipeNotes.trim()}</Tag>
+              )}
             </Space>
           }
           description="表单已预填配方数据，您可在修改后重新计算或保存。保存时默认覆盖原配方。"
@@ -293,7 +309,7 @@ export function CalcPage() {
       )}
 
       <Typography.Paragraph type="secondary">
-        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算碱用量。支持氢氧化钠和氢氧化钾两种碱类型，氢氧化钾用量 = 氢氧化钠用量 × 0.7。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。您也可以从「配方列表」页点击「载入计算器」，将已有配方的名称、总油重、油脂配比等自动预填到本页表单，在此基础上修改后重新计算或保存。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
+        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算碱用量。支持氢氧化钠和氢氧化钾两种碱类型，氢氧化钾用量 = 氢氧化钠用量 × 0.7。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。保存配方时可填写可选备注，方便后续筛选和辨识。您也可以从「配方列表」页点击「载入计算器」，将已有配方的名称、总油重、油脂配比、备注等自动预填到本页表单，在此基础上修改后重新计算或保存。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
       </Typography.Paragraph>
 
       <Card title="配方参数">
@@ -331,21 +347,6 @@ export function CalcPage() {
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item
-                label="备注（可选）"
-                validateStatus={errors.recipeNotes ? 'error' : undefined}
-                help={errors.recipeNotes?.message}
-              >
-                <Controller
-                  name="recipeNotes"
-                  control={control}
-                  render={({ field }) => (
-                    <Input.TextArea {...field} rows={2} placeholder="例如：适合干性肌肤，冬季使用" maxLength={500} showCount />
-                  )}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} sm={12}>
-              <Form.Item
                 label="总油脂重量（g）"
                 required
                 validateStatus={errors.totalOilWeight ? 'error' : undefined}
@@ -361,6 +362,23 @@ export function CalcPage() {
                       style={{ width: '100%' }}
                       addonAfter="g"
                     />
+                  )}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col xs={24}>
+              <Form.Item
+                label="备注（可选）"
+                validateStatus={errors.recipeNotes ? 'error' : undefined}
+                help={errors.recipeNotes?.message}
+              >
+                <Controller
+                  name="recipeNotes"
+                  control={control}
+                  render={({ field }) => (
+                    <Input.TextArea {...field} rows={2} placeholder="例如：适合干性肌肤，冬季使用" maxLength={500} showCount />
                   )}
                 />
               </Form.Item>
@@ -491,6 +509,9 @@ export function CalcPage() {
               }}
             >
               添加油脂
+            </Button>
+            <Button onClick={onEvenDistribute} disabled={fields.length < 2}>
+              均分比例
             </Button>
             <Button type="primary" htmlType="submit">
               计算碱量
