@@ -6,6 +6,24 @@ import { KOH_CONVERSION_FACTOR } from '../types';
 const WATER_RATIO = new Decimal('2.5');
 
 /**
+ * 获取碱类型的中文名称
+ * @param type - 碱类型（NaOH 或 KOH），若为 undefined 则默认返回氢氧化钠
+ * @returns 碱类型中文名称
+ */
+export function getAlkaliLabel(type: AlkaliType | undefined): string {
+  return type === 'KOH' ? '氢氧化钾' : '氢氧化钠';
+}
+
+/**
+ * 获取碱量展示的后缀文本（格式："克 氢氧化钠" / "克 氢氧化钾"）
+ * @param type - 碱类型（NaOH 或 KOH）
+ * @returns 带单位的碱类型后缀
+ */
+export function getAlkaliSuffix(type: AlkaliType): string {
+  return `克 ${getAlkaliLabel(type)}`;
+}
+
+/**
  * 校验油脂比例合计是否为 100%
  * @param oils - 油脂配比列表
  */

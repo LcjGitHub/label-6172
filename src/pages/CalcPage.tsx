@@ -16,19 +16,25 @@ import {
   Row,
   Select,
   Space,
-  Statistic,
-  Table,
   Tag,
   Typography,
   message,
 } from 'antd';
 import { DeleteOutlined, ExclamationCircleOutlined, PartitionOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
-import { buildOilMap, calculateBatch, calculateLye, evenlyDistributePercentages, sumPercentages } from '../lib/calc';
+import {
+  buildOilMap,
+  calculateBatch,
+  calculateLye,
+  evenlyDistributePercentages,
+  getAlkaliLabel,
+  sumPercentages,
+} from '../lib/calc';
 import { calcFormSchema, type CalcFormValues } from '../schemas/calcSchema';
 import { useRecipeStore } from '../store/recipeStore';
 import { useCalcLoadStore } from '../store/calcLoadStore';
-import type { AlkaliType, CalcResult, Oil } from '../types';
+import type { CalcResult, Oil } from '../types';
+import { BatchCalcResultDisplay, CalcResultDisplay } from '../components/CalcResultDisplay';
 
 const oils = oilsData as Oil[];
 
@@ -131,9 +137,6 @@ export function CalcPage() {
       }
     }
   }, [watchedAlkaliType, getValues, oilMap]);
-
-  const alkaliLabel = (type: AlkaliType) => (type === 'NaOH' ? '氢氧化钠' : '氢氧化钾');
-  const alkaliSuffix = (type: AlkaliType) => `克 ${alkaliLabel(type)}`;
 
   const batchCalcResult = useMemo(() => {
     if (!result || !singleBlockWeight || !batchCount || singleBlockWeight <= 0 || batchCount <= 0) {
@@ -282,7 +285,7 @@ export function CalcPage() {
               <Tag color="blue">总油重 {loadedRecipe.totalOilWeight} 克</Tag>
               <Tag color="orange">超脂 {loadedRecipe.superfatPercentage}%</Tag>
               <Tag color="green">
-                碱类型 {loadedRecipe.alkaliType === 'NaOH' ? '氢氧化钠' : '氢氧化钾'}
+                碱类型 {getAlkaliLabel(loadedRecipe.alkaliType)}
               </Tag>
               {loadedRecipe.recipeNotes && loadedRecipe.recipeNotes.trim() && (
                 <Tag color="purple">备注：{loadedRecipe.recipeNotes.trim()}</Tag>
@@ -523,64 +526,7 @@ export function CalcPage() {
         </Form>
       </Card>
 
-      {result && (
-        <Card title={`计算结果（${alkaliLabel(result.alkaliType)}）`}>
-          <Row gutter={24} style={{ marginBottom: 16 }}>
-            <Col xs={24} sm={8}>
-              <Statistic
-                title={`扣减前${alkaliLabel(result.alkaliType)}量`}
-                value={result.lyeBeforeSuperfat}
-                suffix={alkaliSuffix(result.alkaliType)}
-              />
-            </Col>
-            <Col xs={24} sm={8}>
-              <Statistic
-                title={`${alkaliLabel(result.alkaliType)}超脂扣减量`}
-                value={result.superfatDeduction}
-                suffix="克"
-                valueStyle={{ color: '#fa8c16' }}
-                prefix={parseFloat(result.superfatDeduction) > 0 ? '-' : undefined}
-              />
-            </Col>
-            <Col xs={24} sm={8}>
-              <Statistic
-                title={`扣减后${alkaliLabel(result.alkaliType)}量（最终）`}
-                value={result.lyeAmount}
-                suffix={alkaliSuffix(result.alkaliType)}
-                valueStyle={{ color: '#1677ff', fontWeight: 600 }}
-              />
-            </Col>
-          </Row>
-
-          <Row gutter={24}>
-            <Col xs={24} sm={8}>
-              <Statistic title="总油重" value={result.totalOilWeight} suffix="克" />
-            </Col>
-            <Col xs={24} sm={8}>
-              <Statistic
-                title="建议水量（Mock 2.5×最终碱量）"
-                value={result.waterAmount}
-                suffix="克"
-              />
-            </Col>
-          </Row>
-
-          <Divider />
-
-          <Table
-            rowKey="oilId"
-            pagination={false}
-            size="small"
-            dataSource={result.oilDetails}
-            columns={[
-              { title: '油脂', dataIndex: 'oilName', key: 'oilName' },
-              { title: '比例', dataIndex: 'percentage', key: 'percentage', render: (v) => `${v}%` },
-              { title: '重量（克）', dataIndex: 'weight', key: 'weight' },
-              { title: `贡献${alkaliLabel(result.alkaliType)}量（克）`, dataIndex: 'lye', key: 'lye' },
-            ]}
-          />
-        </Card>
-      )}
+      {result && <CalcResultDisplay result={result} />}
 
       {result && (
         <Card title="批量换算">
@@ -615,79 +561,7 @@ export function CalcPage() {
           </Row>
 
           {batchCalcResult ? (
-            <>
-              <Alert
-                type="info"
-                showIcon
-                message={`换算系数：${batchCalcResult.scaleFactor}（当前配方成品总重 ${batchCalcResult.currentTotalWeight}克 → 目标总重 ${batchCalcResult.targetTotalWeight}克）`}
-                style={{ marginBottom: 16 }}
-              />
-              <Row gutter={24} style={{ marginBottom: 16 }}>
-                <Col xs={24} sm={8}>
-                  <Statistic
-                    title={`批量扣减前${alkaliLabel(batchCalcResult.alkaliType)}量`}
-                    value={batchCalcResult.lyeBeforeSuperfat}
-                    suffix={alkaliSuffix(batchCalcResult.alkaliType)}
-                  />
-                </Col>
-                <Col xs={24} sm={8}>
-                  <Statistic
-                    title={`${alkaliLabel(batchCalcResult.alkaliType)}超脂扣减量`}
-                    value={batchCalcResult.superfatDeduction}
-                    suffix="克"
-                    valueStyle={{ color: '#fa8c16' }}
-                    prefix={parseFloat(batchCalcResult.superfatDeduction) > 0 ? '-' : undefined}
-                  />
-                </Col>
-                <Col xs={24} sm={8}>
-                  <Statistic
-                    title={`批量扣减后${alkaliLabel(batchCalcResult.alkaliType)}量（最终）`}
-                    value={batchCalcResult.lyeAmount}
-                    suffix={alkaliSuffix(batchCalcResult.alkaliType)}
-                    valueStyle={{ color: '#1677ff', fontWeight: 600 }}
-                  />
-                </Col>
-              </Row>
-              <Row gutter={24} style={{ marginBottom: 16 }}>
-                <Col xs={24} sm={8}>
-                  <Statistic
-                    title="批量总油重"
-                    value={batchCalcResult.totalOilWeight}
-                    suffix="克"
-                  />
-                </Col>
-                <Col xs={24} sm={8}>
-                  <Statistic
-                    title="批量建议水量"
-                    value={batchCalcResult.waterAmount}
-                    suffix="克"
-                  />
-                </Col>
-                <Col xs={24} sm={8}>
-                  <Statistic
-                    title="成品总重量"
-                    value={batchCalcResult.targetTotalWeight}
-                    suffix="克"
-                    prefix={`${batchCalcResult.singleBlockWeight}克 × ${batchCalcResult.batchCount} 块 =`}
-                  />
-                </Col>
-              </Row>
-
-              <Divider />
-
-              <Table
-                rowKey="oilId"
-                pagination={false}
-                size="small"
-                dataSource={batchCalcResult.oilDetails}
-                columns={[
-                  { title: '油脂', dataIndex: 'oilName', key: 'oilName' },
-                  { title: '比例', dataIndex: 'percentage', key: 'percentage', render: (v) => `${v}%` },
-                  { title: '批量重量（克）', dataIndex: 'weight', key: 'weight' },
-                  { title: `批量贡献${alkaliLabel(batchCalcResult.alkaliType)}量（克）`, dataIndex: 'lye', key: 'lye' },
-                ]}
-              />
-            </>
+            <BatchCalcResultDisplay result={batchCalcResult} />
           ) : (
             <Empty description="请填写单块成品重量和计划制作块数" />
           )}

@@ -15,17 +15,14 @@ import {
 } from 'antd';
 import { CalculatorOutlined, CopyOutlined, DeleteOutlined, DownloadOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
-import { buildOilMap } from '../lib/calc';
+import { buildOilMap, getAlkaliLabel } from '../lib/calc';
 import { exportRecipesToFile, parseImportFile } from '../lib/exportImportUtils';
 import { filterRecipesByName } from '../lib/filterUtils';
 import { useRecipeStore } from '../store/recipeStore';
 import { useCalcLoadStore } from '../store/calcLoadStore';
-import type { AlkaliType, Oil } from '../types';
+import type { Oil } from '../types';
 
 const oils = oilsData as Oil[];
-
-const alkaliLabel = (type: AlkaliType | undefined) =>
-  type === 'KOH' ? '氢氧化钾' : '氢氧化钠';
 
 /**
  * 配方列表页面
@@ -190,7 +187,7 @@ export function RecipesPage() {
                 key: 'lyeAmount',
                 render: (v: string, record: any) => (
                   <Tag color="blue">
-                    {v} 克 {alkaliLabel(record.alkaliType)}
+                    {v} 克 {getAlkaliLabel(record.alkaliType)}
                   </Tag>
                 ),
               },
