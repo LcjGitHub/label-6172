@@ -35,6 +35,10 @@ export interface CalcResult {
 export interface BatchCalcResult {
   /** 换算比例系数 */
   scaleFactor: string;
+  /** 当前配方成品总重 (g) */
+  currentTotalWeight: string;
+  /** 目标成品总重 (g) */
+  targetTotalWeight: string;
   /** 单块成品重量 (g) */
   singleBlockWeight: string;
   /** 计划制作块数 */

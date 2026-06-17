@@ -7,6 +7,7 @@ import {
   Card,
   Col,
   Divider,
+  Empty,
   Form,
   Input,
   InputNumber,
@@ -113,7 +114,7 @@ export function CalcPage() {
         碱量计算器
       </Typography.Title>
       <Typography.Paragraph type="secondary">
-        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算氢氧化钠用量。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应氢氧化钠，使成品保留更多未皂化油脂，滋润肌肤。
+        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算氢氧化钠用量。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应氢氧化钠，使成品保留更多未皂化油脂，滋润肌肤。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、氢氧化钠、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
       </Typography.Paragraph>
 
       <Card title="配方参数">
@@ -382,43 +383,61 @@ export function CalcPage() {
             </Col>
           </Row>
 
-          {batchCalcResult && (
+          {batchCalcResult ? (
             <>
               <Alert
                 type="info"
                 showIcon
-                message={`换算系数：${batchCalcResult.scaleFactor}（当前配方成品总重 → 目标总重）`}
+                message={`换算系数：${batchCalcResult.scaleFactor}（当前配方成品总重 ${batchCalcResult.currentTotalWeight}g → 目标总重 ${batchCalcResult.targetTotalWeight}g）`}
                 style={{ marginBottom: 16 }}
               />
               <Row gutter={24} style={{ marginBottom: 16 }}>
-                <Col xs={24} sm={6}>
+                <Col xs={24} sm={8}>
+                  <Statistic
+                    title="批量扣减前碱量"
+                    value={batchCalcResult.lyeBeforeSuperfat}
+                    suffix="g NaOH"
+                  />
+                </Col>
+                <Col xs={24} sm={8}>
+                  <Statistic
+                    title="批量超脂扣减量"
+                    value={batchCalcResult.superfatDeduction}
+                    suffix="g"
+                    valueStyle={{ color: '#fa8c16' }}
+                    prefix={parseFloat(batchCalcResult.superfatDeduction) > 0 ? '-' : undefined}
+                  />
+                </Col>
+                <Col xs={24} sm={8}>
+                  <Statistic
+                    title="批量扣减后碱量（最终）"
+                    value={batchCalcResult.lyeAmount}
+                    suffix="g NaOH"
+                    valueStyle={{ color: '#1677ff', fontWeight: 600 }}
+                  />
+                </Col>
+              </Row>
+              <Row gutter={24} style={{ marginBottom: 16 }}>
+                <Col xs={24} sm={8}>
                   <Statistic
                     title="批量总油重"
                     value={batchCalcResult.totalOilWeight}
                     suffix="g"
                   />
                 </Col>
-                <Col xs={24} sm={6}>
-                  <Statistic
-                    title="批量碱量（最终）"
-                    value={batchCalcResult.lyeAmount}
-                    suffix="g NaOH"
-                    valueStyle={{ color: '#1677ff' }}
-                  />
-                </Col>
-                <Col xs={24} sm={6}>
+                <Col xs={24} sm={8}>
                   <Statistic
                     title="批量建议水量"
                     value={batchCalcResult.waterAmount}
                     suffix="g"
                   />
                 </Col>
-                <Col xs={24} sm={6}>
+                <Col xs={24} sm={8}>
                   <Statistic
-                    title="制作总量"
-                    value={batchCalcResult.batchCount}
-                    suffix="块"
-                    prefix={`${batchCalcResult.singleBlockWeight}g ×`}
+                    title="成品总重量"
+                    value={batchCalcResult.targetTotalWeight}
+                    suffix="g"
+                    prefix={`${batchCalcResult.singleBlockWeight}g × ${batchCalcResult.batchCount} 块 =`}
                   />
                 </Col>
               </Row>
@@ -438,6 +457,8 @@ export function CalcPage() {
                 ]}
               />
             </>
+          ) : (
+            <Empty description="请填写单块成品重量和计划制作块数" />
           )}
         </Card>
       )}

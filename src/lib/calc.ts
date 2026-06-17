@@ -86,6 +86,14 @@ export function buildOilMap(oils: Oil[]): Map<string, Oil> {
   return new Map(oils.map((oil) => [oil.id, oil]));
 }
 
+/**
+ * 按单块成品重量与计划制作块数进行批量换算
+ * 根据当前配方的成品总重（油 + 碱 + 水）与目标总重（单块重量 × 块数）
+ * 计算换算系数，并等比放大所有用量字段，全程使用 decimal.js 保证高精度。
+ * @param calcResult - 碱量计算结果（基准配方）
+ * @param singleBlockWeight - 单块成品重量（g）
+ * @param batchCount - 计划制作块数
+ */
 export function calculateBatch(
   calcResult: CalcResult,
   singleBlockWeight: number,
@@ -116,6 +124,8 @@ export function calculateBatch(
 
   return {
     scaleFactor: scaleFactor.toFixed(6),
+    currentTotalWeight: currentTotal.toFixed(2),
+    targetTotalWeight: desiredTotal.toFixed(2),
     singleBlockWeight: new Decimal(singleBlockWeight).toFixed(2),
     batchCount,
     totalOilWeight: totalOilWeight.toFixed(2),
