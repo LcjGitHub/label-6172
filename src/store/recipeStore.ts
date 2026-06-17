@@ -108,13 +108,27 @@ export const useRecipeStore = create<RecipeState>()(
         set((state) => ({
           recipes: state.recipes.filter((r) => r.id !== id),
         })),
+      /**
+       * 复制指定配方：以指定 id 的配方为原型创建一条新记录并插入列表顶部，
+       * 新名称在原名称后追加「副本」后缀，若已存在同名副本则自动追加序号（如副本2、副本3…），
+       * 同时生成新的唯一标识与保存时间；原配方保持不变。
+       * 若找不到源配方则返回 null。
+       */
       duplicateRecipe: (id) => {
         const source = get().recipes.find((r) => r.id === id);
         if (!source) return null;
+        const baseName = source.name;
+        const existingNames = new Set(get().recipes.map((r) => r.name));
+        let candidate = `${baseName}副本`;
+        let counter = 2;
+        while (existingNames.has(candidate)) {
+          candidate = `${baseName}副本${counter}`;
+          counter++;
+        }
         const copy: Recipe = {
           ...source,
           id: crypto.randomUUID(),
-          name: `${source.name}副本`,
+          name: candidate,
           createdAt: new Date().toISOString(),
         };
         set((state) => ({

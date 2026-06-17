@@ -98,7 +98,7 @@ export function RecipesPage() {
         配方列表
       </Typography.Title>
       <Typography.Paragraph type="secondary">
-        已保存的配方会持久化到本地，可随时查看或删除。支持按配方名称关键字实时筛选，备注列内容过长时将自动省略截断，鼠标悬停可查看完整备注。支持「导出全部」将配方导出为数据备份文件，或「从文件导入」将备份中的配方合并写入本地（同名配方将被跳过）。
+        已保存的配方会持久化到本地，可随时查看或删除。支持按配方名称关键字实时筛选，备注列内容过长时将自动省略截断，鼠标悬停可查看完整备注。每行可点击「复制配方」快速创建带「副本」后缀的新记录。支持「导出全部」将配方导出为数据备份文件，或「从文件导入」将备份中的配方合并写入本地（同名配方将被跳过）。
       </Typography.Paragraph>
 
       <Card>
@@ -268,6 +268,8 @@ export function RecipesPage() {
                         const copy = duplicateRecipe(record.id);
                         if (copy) {
                           message.success(`已复制配方「${copy.name}」`);
+                        } else {
+                          message.error('复制失败：源配方不存在');
                         }
                       }}
                     >
