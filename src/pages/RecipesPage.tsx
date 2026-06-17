@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Button,
   Card,
@@ -10,9 +10,10 @@ import {
   Typography,
   message,
 } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
+import { DeleteOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
 import { buildOilMap } from '../lib/calc';
+import { exportRecipesToFile, parseImportFile } from '../lib/exportImportUtils';
 import { useRecipeStore } from '../store/recipeStore';
 import type { Oil } from '../types';
 
@@ -24,7 +25,10 @@ const oils = oilsData as Oil[];
 export function RecipesPage() {
   const recipes = useRecipeStore((s) => s.recipes);
   const removeRecipe = useRecipeStore((s) => s.removeRecipe);
+  const importRecipes = useRecipeStore((s) => s.importRecipes);
   const oilMap = useMemo(() => buildOilMap(oils), []);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
 
   const formatOils = (oilIds: { oilId: string; percentage: number }[]) =>
     oilIds
@@ -33,6 +37,40 @@ export function RecipesPage() {
         return `${name} ${item.percentage}%`;
       })
       .join('、');
+
+  const handleExport = () => {
+    if (recipes.length === 0) {
+      message.warning('暂无可导出的配方');
+      return;
+    }
+    exportRecipesToFile(recipes);
+    message.success(`已导出 ${recipes.length} 个配方`);
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const incoming = await parseImportFile(file);
+      const result = importRecipes(incoming);
+      message.success(
+        `导入完成：成功导入 ${result.importedCount} 个，跳过 ${result.skippedCount} 个重复`,
+      );
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : '导入失败');
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -44,6 +82,29 @@ export function RecipesPage() {
       </Typography.Paragraph>
 
       <Card>
+        <Space style={{ marginBottom: 16, width: '100%' }}>
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={handleExport}
+            disabled={recipes.length === 0}
+          >
+            导出全部
+          </Button>
+          <Button
+            icon={<UploadOutlined />}
+            onClick={handleImportClick}
+            loading={importing}
+          >
+            从文件导入
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
+        </Space>
         {recipes.length === 0 ? (
           <Empty description="暂无保存的配方，请前往计算器保存" />
         ) : (
