@@ -28,18 +28,22 @@ export function sumPercentages(oils: OilRatio[]): Decimal {
 }
 
 /**
- * 按 Mock 皂化值计算碱量
+ * 按 Mock 皂化值计算碱量（含超脂扣减）
  * 公式：碱量(g) = Σ(油脂重量 × 皂化值)，油脂重量 = 总油重 × 比例%
+ * 超脂扣减：最终碱量 = 原始碱量 × (1 - 超脂比例%)
  * @param totalOilWeight - 总油脂重量（g）
  * @param oils - 油脂配比
  * @param oilMap - 油脂字典
+ * @param superfatPercentage - 超脂比例（%，0-20）
  */
 export function calculateLye(
   totalOilWeight: number,
   oils: OilRatio[],
   oilMap: Map<string, Oil>,
+  superfatPercentage: number = 0,
 ): CalcResult {
   const total = new Decimal(totalOilWeight);
+  const superfatPct = new Decimal(superfatPercentage);
   let totalLye = new Decimal(0);
 
   const oilDetails = oils.map((item) => {
@@ -59,11 +63,16 @@ export function calculateLye(
     };
   });
 
-  const waterAmount = totalLye.mul(WATER_RATIO);
+  const lyeBeforeSuperfat = totalLye;
+  const superfatDeduction = lyeBeforeSuperfat.mul(superfatPct).div(100);
+  const finalLye = lyeBeforeSuperfat.minus(superfatDeduction);
+  const waterAmount = finalLye.mul(WATER_RATIO);
 
   return {
     totalOilWeight: total.toFixed(2),
-    lyeAmount: totalLye.toFixed(3),
+    lyeBeforeSuperfat: lyeBeforeSuperfat.toFixed(3),
+    superfatDeduction: superfatDeduction.toFixed(3),
+    lyeAmount: finalLye.toFixed(3),
     waterAmount: waterAmount.toFixed(2),
     oilDetails,
   };

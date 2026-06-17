@@ -16,6 +16,10 @@ export const calcFormSchema = z
     totalOilWeight: z
       .number({ invalid_type_error: '请输入总油重' })
       .min(1, '总油重须大于 0'),
+    superfatPercentage: z
+      .number({ invalid_type_error: '请输入超脂比例' })
+      .min(0, '超脂比例不能小于 0')
+      .max(20, '超脂比例不能超过 20'),
     oils: z.array(oilRatioSchema).min(1, '至少选择一种油脂'),
   })
   .superRefine((data, ctx) => {

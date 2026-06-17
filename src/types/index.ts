@@ -15,6 +15,11 @@ export interface OilRatio {
 /** 计算结果 */
 export interface CalcResult {
   totalOilWeight: string;
+  /** 扣减前碱量（按皂化值算出的原始碱量） */
+  lyeBeforeSuperfat: string;
+  /** 超脂扣减量 */
+  superfatDeduction: string;
+  /** 扣减后碱量（最终碱量） */
   lyeAmount: string;
   waterAmount: string;
   oilDetails: Array<{
@@ -31,6 +36,7 @@ export interface Recipe {
   id: string;
   name: string;
   totalOilWeight: number;
+  superfatPercentage: number;
   oils: OilRatio[];
   lyeAmount: string;
   waterAmount: string;

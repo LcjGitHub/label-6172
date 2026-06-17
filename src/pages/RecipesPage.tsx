@@ -65,6 +65,14 @@ export function RecipesPage() {
                 render: (v: number) => `${v} g`,
               },
               {
+                title: '超脂比例',
+                dataIndex: 'superfatPercentage',
+                key: 'superfatPercentage',
+                render: (v: number) => (
+                  <Tag color="orange">{v}%</Tag>
+                ),
+              },
+              {
                 title: '油脂配比',
                 dataIndex: 'oils',
                 key: 'oils',

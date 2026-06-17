@@ -30,6 +30,7 @@ const oils = oilsData as Oil[];
 const defaultValues: CalcFormValues = {
   recipeName: '',
   totalOilWeight: 500,
+  superfatPercentage: 5,
   oils: [{ oilId: 'olive', percentage: 100 }],
 };
 
@@ -64,13 +65,23 @@ export function CalcPage() {
   const usedOilIds = watchedOils?.map((o) => o.oilId) ?? [];
 
   const onCalculate = handleSubmit((values) => {
-    const calc = calculateLye(values.totalOilWeight, values.oils, oilMap);
+    const calc = calculateLye(
+      values.totalOilWeight,
+      values.oils,
+      oilMap,
+      values.superfatPercentage,
+    );
     setResult(calc);
     message.success('计算完成');
   });
 
   const onSave = handleSubmit((values) => {
-    const calc = calculateLye(values.totalOilWeight, values.oils, oilMap);
+    const calc = calculateLye(
+      values.totalOilWeight,
+      values.oils,
+      oilMap,
+      values.superfatPercentage,
+    );
     const name = values.recipeName?.trim();
     if (!name) {
       message.warning('保存前请填写配方名称');
@@ -79,6 +90,7 @@ export function CalcPage() {
     addRecipe({
       name,
       totalOilWeight: values.totalOilWeight,
+      superfatPercentage: values.superfatPercentage,
       oils: values.oils,
       lyeAmount: calc.lyeAmount,
       waterAmount: calc.waterAmount,
@@ -128,6 +140,33 @@ export function CalcPage() {
                       min={1}
                       style={{ width: '100%' }}
                       addonAfter="g"
+                    />
+                  )}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="超脂比例（%）"
+                required
+                validateStatus={errors.superfatPercentage ? 'error' : undefined}
+                help={errors.superfatPercentage?.message}
+              >
+                <Controller
+                  name="superfatPercentage"
+                  control={control}
+                  render={({ field }) => (
+                    <InputNumber
+                      {...field}
+                      min={0}
+                      max={20}
+                      precision={2}
+                      step={0.5}
+                      style={{ width: '100%' }}
+                      addonAfter="%"
                     />
                   )}
                 />
@@ -245,21 +284,40 @@ export function CalcPage() {
 
       {result && (
         <Card title="计算结果">
+          <Row gutter={24} style={{ marginBottom: 16 }}>
+            <Col xs={24} sm={8}>
+              <Statistic
+                title="扣减前碱量"
+                value={result.lyeBeforeSuperfat}
+                suffix="g NaOH"
+              />
+            </Col>
+            <Col xs={24} sm={8}>
+              <Statistic
+                title="超脂扣减量"
+                value={result.superfatDeduction}
+                suffix="g"
+                valueStyle={{ color: '#fa8c16' }}
+                prefix="-"
+              />
+            </Col>
+            <Col xs={24} sm={8}>
+              <Statistic
+                title="扣减后碱量（最终）"
+                value={result.lyeAmount}
+                suffix="g NaOH"
+                valueStyle={{ color: '#1677ff', fontWeight: 600 }}
+              />
+            </Col>
+          </Row>
+
           <Row gutter={24}>
             <Col xs={24} sm={8}>
               <Statistic title="总油重" value={result.totalOilWeight} suffix="g" />
             </Col>
             <Col xs={24} sm={8}>
               <Statistic
-                title="氢氧化钠（NaOH）"
-                value={result.lyeAmount}
-                suffix="g"
-                valueStyle={{ color: '#1677ff' }}
-              />
-            </Col>
-            <Col xs={24} sm={8}>
-              <Statistic
-                title="建议水量（Mock 2.5×碱量）"
+                title="建议水量（Mock 2.5×最终碱量）"
                 value={result.waterAmount}
                 suffix="g"
               />
