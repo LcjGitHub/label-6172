@@ -22,7 +22,7 @@ import {
   Typography,
   message,
 } from 'antd';
-import { DeleteOutlined, ExclamationCircleOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import { DeleteOutlined, ExclamationCircleOutlined, PartitionOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
 import { buildOilMap, calculateBatch, calculateLye, evenlyDistributePercentages, sumPercentages } from '../lib/calc';
 import { calcFormSchema, type CalcFormValues } from '../schemas/calcSchema';
@@ -309,7 +309,7 @@ export function CalcPage() {
       )}
 
       <Typography.Paragraph type="secondary">
-        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算碱用量。支持氢氧化钠和氢氧化钾两种碱类型，氢氧化钾用量 = 氢氧化钠用量 × 0.7。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。保存配方时可填写可选备注，方便后续筛选和辨识。您也可以从「配方列表」页点击「载入计算器」，将已有配方的名称、总油重、油脂配比、备注等自动预填到本页表单，在此基础上修改后重新计算或保存。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
+        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算碱用量。支持氢氧化钠和氢氧化钾两种碱类型，氢氧化钾用量 = 氢氧化钠用量 × 0.7。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。添加两种及以上油脂后可点击「均分比例」按钮自动平均分配比例，合计恰好为 100%。保存配方时可填写可选备注，方便后续筛选和辨识。您也可以从「配方列表」页点击「载入计算器」，将已有配方的名称、总油重、油脂配比、备注等自动预填到本页表单，在此基础上修改后重新计算或保存。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
       </Typography.Paragraph>
 
       <Card title="配方参数">
@@ -510,7 +510,7 @@ export function CalcPage() {
             >
               添加油脂
             </Button>
-            <Button onClick={onEvenDistribute} disabled={fields.length < 2}>
+            <Button icon={<PartitionOutlined />} onClick={onEvenDistribute} disabled={fields.length < 2}>
               均分比例
             </Button>
             <Button type="primary" htmlType="submit">
