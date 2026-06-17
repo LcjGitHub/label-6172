@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm, Controller } from 'react-hook-form';
 import {
@@ -46,6 +46,7 @@ export function CalcPage() {
   const [result, setResult] = useState<CalcResult | null>(null);
   const [singleBlockWeight, setSingleBlockWeight] = useState<number | null>(null);
   const [batchCount, setBatchCount] = useState<number | null>(null);
+  const hasResultRef = useRef(false);
 
   const {
     control,
@@ -72,7 +73,7 @@ export function CalcPage() {
   const usedOilIds = watchedOils?.map((o) => o.oilId) ?? [];
 
   useEffect(() => {
-    if (result) {
+    if (hasResultRef.current) {
       const values = getValues();
       if (
         values.totalOilWeight &&
@@ -91,10 +92,10 @@ export function CalcPage() {
         setResult(calc);
       }
     }
-  }, [watchedAlkaliType, result, getValues, oilMap]);
+  }, [watchedAlkaliType, getValues, oilMap]);
 
   const alkaliLabel = (type: AlkaliType) => (type === 'NaOH' ? '氢氧化钠' : '氢氧化钾');
-  const alkaliSuffix = (type: AlkaliType) => (type === 'NaOH' ? 'g NaOH' : 'g KOH');
+  const alkaliSuffix = (type: AlkaliType) => `克 ${alkaliLabel(type)}`;
 
   const batchCalcResult = useMemo(() => {
     if (!result || !singleBlockWeight || !batchCount || singleBlockWeight <= 0 || batchCount <= 0) {
@@ -112,6 +113,7 @@ export function CalcPage() {
       values.alkaliType,
     );
     setResult(calc);
+    hasResultRef.current = true;
     message.success('计算完成');
   });
 
@@ -146,7 +148,7 @@ export function CalcPage() {
         碱量计算器
       </Typography.Title>
       <Typography.Paragraph type="secondary">
-        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算碱用量。支持氢氧化钠（NaOH）和氢氧化钾（KOH）两种碱类型，氢氧化钾用量 = 氢氧化钠用量 × 0.7。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
+        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算碱用量。支持氢氧化钠和氢氧化钾两种碱类型，氢氧化钾用量 = 氢氧化钠用量 × 0.7。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
       </Typography.Paragraph>
 
       <Card title="配方参数">
@@ -159,8 +161,8 @@ export function CalcPage() {
                   control={control}
                   render={({ field }) => (
                     <Radio.Group {...field}>
-                      <Radio value="NaOH">氢氧化钠（NaOH）</Radio>
-                      <Radio value="KOH">氢氧化钾（KOH，用量 = NaOH × 0.7）</Radio>
+                      <Radio value="NaOH">氢氧化钠</Radio>
+                      <Radio value="KOH">氢氧化钾（用量 = 氢氧化钠 × 0.7）</Radio>
                     </Radio.Group>
                   )}
                 />
@@ -352,9 +354,9 @@ export function CalcPage() {
             </Col>
             <Col xs={24} sm={8}>
               <Statistic
-                title="超脂扣减量"
+                title={`${alkaliLabel(result.alkaliType)}超脂扣减量`}
                 value={result.superfatDeduction}
-                suffix="g"
+                suffix="克"
                 valueStyle={{ color: '#fa8c16' }}
                 prefix={parseFloat(result.superfatDeduction) > 0 ? '-' : undefined}
               />
@@ -371,13 +373,13 @@ export function CalcPage() {
 
           <Row gutter={24}>
             <Col xs={24} sm={8}>
-              <Statistic title="总油重" value={result.totalOilWeight} suffix="g" />
+              <Statistic title="总油重" value={result.totalOilWeight} suffix="克" />
             </Col>
             <Col xs={24} sm={8}>
               <Statistic
                 title="建议水量（Mock 2.5×最终碱量）"
                 value={result.waterAmount}
-                suffix="g"
+                suffix="克"
               />
             </Col>
           </Row>
@@ -392,8 +394,8 @@ export function CalcPage() {
             columns={[
               { title: '油脂', dataIndex: 'oilName', key: 'oilName' },
               { title: '比例', dataIndex: 'percentage', key: 'percentage', render: (v) => `${v}%` },
-              { title: '重量 (g)', dataIndex: 'weight', key: 'weight' },
-              { title: `贡献${alkaliLabel(result.alkaliType)}量 (g)`, dataIndex: 'lye', key: 'lye' },
+              { title: '重量（克）', dataIndex: 'weight', key: 'weight' },
+              { title: `贡献${alkaliLabel(result.alkaliType)}量（克）`, dataIndex: 'lye', key: 'lye' },
             ]}
           />
         </Card>
@@ -436,7 +438,7 @@ export function CalcPage() {
               <Alert
                 type="info"
                 showIcon
-                message={`换算系数：${batchCalcResult.scaleFactor}（当前配方成品总重 ${batchCalcResult.currentTotalWeight}g → 目标总重 ${batchCalcResult.targetTotalWeight}g）`}
+                message={`换算系数：${batchCalcResult.scaleFactor}（当前配方成品总重 ${batchCalcResult.currentTotalWeight}克 → 目标总重 ${batchCalcResult.targetTotalWeight}克）`}
                 style={{ marginBottom: 16 }}
               />
               <Row gutter={24} style={{ marginBottom: 16 }}>
@@ -449,9 +451,9 @@ export function CalcPage() {
                 </Col>
                 <Col xs={24} sm={8}>
                   <Statistic
-                    title="批量超脂扣减量"
+                    title={`${alkaliLabel(batchCalcResult.alkaliType)}超脂扣减量`}
                     value={batchCalcResult.superfatDeduction}
-                    suffix="g"
+                    suffix="克"
                     valueStyle={{ color: '#fa8c16' }}
                     prefix={parseFloat(batchCalcResult.superfatDeduction) > 0 ? '-' : undefined}
                   />
@@ -470,22 +472,22 @@ export function CalcPage() {
                   <Statistic
                     title="批量总油重"
                     value={batchCalcResult.totalOilWeight}
-                    suffix="g"
+                    suffix="克"
                   />
                 </Col>
                 <Col xs={24} sm={8}>
                   <Statistic
                     title="批量建议水量"
                     value={batchCalcResult.waterAmount}
-                    suffix="g"
+                    suffix="克"
                   />
                 </Col>
                 <Col xs={24} sm={8}>
                   <Statistic
                     title="成品总重量"
                     value={batchCalcResult.targetTotalWeight}
-                    suffix="g"
-                    prefix={`${batchCalcResult.singleBlockWeight}g × ${batchCalcResult.batchCount} 块 =`}
+                    suffix="克"
+                    prefix={`${batchCalcResult.singleBlockWeight}克 × ${batchCalcResult.batchCount} 块 =`}
                   />
                 </Col>
               </Row>
@@ -500,8 +502,8 @@ export function CalcPage() {
                 columns={[
                   { title: '油脂', dataIndex: 'oilName', key: 'oilName' },
                   { title: '比例', dataIndex: 'percentage', key: 'percentage', render: (v) => `${v}%` },
-                  { title: '批量重量 (g)', dataIndex: 'weight', key: 'weight' },
-                  { title: `批量贡献${alkaliLabel(batchCalcResult.alkaliType)}量 (g)`, dataIndex: 'lye', key: 'lye' },
+                  { title: '批量重量（克）', dataIndex: 'weight', key: 'weight' },
+                  { title: `批量贡献${alkaliLabel(batchCalcResult.alkaliType)}量（克）`, dataIndex: 'lye', key: 'lye' },
                 ]}
               />
             </>

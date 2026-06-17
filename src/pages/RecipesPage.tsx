@@ -20,7 +20,7 @@ import type { AlkaliType, Oil } from '../types';
 const oils = oilsData as Oil[];
 
 const alkaliLabel = (type: AlkaliType | undefined) =>
-  type === 'KOH' ? 'KOH' : 'NaOH';
+  type === 'KOH' ? '氢氧化钾' : '氢氧化钠';
 
 /**
  * 配方列表页面
@@ -159,7 +159,7 @@ export function RecipesPage() {
                 key: 'lyeAmount',
                 render: (v: string, record: any) => (
                   <Tag color="blue">
-                    {v} g {alkaliLabel(record.alkaliType)}
+                    {v} 克 {alkaliLabel(record.alkaliType)}
                   </Tag>
                 ),
               },
