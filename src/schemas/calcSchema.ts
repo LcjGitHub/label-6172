@@ -17,6 +17,7 @@ export const calcFormSchema = z
   .object({
     alkaliType: alkaliTypeSchema.default('NaOH'),
     recipeName: z.string().optional(),
+    recipeNotes: z.string().max(500, '备注不能超过 500 字').optional(),
     totalOilWeight: z
       .number({ invalid_type_error: '请输入总油重' })
       .min(1, '总油重须大于 0'),

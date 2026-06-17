@@ -7,6 +7,7 @@ export interface LoadedRecipeData {
   superfatPercentage: number;
   alkaliType: AlkaliType;
   oils: OilRatio[];
+  recipeNotes?: string;
 }
 
 interface CalcLoadState {

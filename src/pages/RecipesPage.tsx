@@ -9,6 +9,7 @@ import {
   Space,
   Table,
   Tag,
+  Tooltip,
   Typography,
   message,
 } from 'antd';
@@ -199,6 +200,34 @@ export function RecipesPage() {
                 render: (v: string) => `${v} g`,
               },
               {
+                title: '备注',
+                dataIndex: 'notes',
+                key: 'notes',
+                width: 160,
+                render: (v: string | undefined) => {
+                  if (!v) return <Typography.Text type="secondary">-</Typography.Text>;
+                  if (v.length > 20) {
+                    return (
+                      <Tooltip title={v} placement="topLeft">
+                        <Typography.Text
+                          style={{
+                            maxWidth: 140,
+                            display: 'inline-block',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            verticalAlign: 'middle',
+                          }}
+                        >
+                          {v}
+                        </Typography.Text>
+                      </Tooltip>
+                    );
+                  }
+                  return <Typography.Text>{v}</Typography.Text>;
+                },
+              },
+              {
                 title: '保存时间',
                 dataIndex: 'createdAt',
                 key: 'createdAt',
@@ -221,6 +250,7 @@ export function RecipesPage() {
                             superfatPercentage: record.superfatPercentage ?? 0,
                             alkaliType: record.alkaliType ?? 'NaOH',
                             oils: record.oils,
+                            recipeNotes: record.notes ?? '',
                           },
                           record.id,
                         );

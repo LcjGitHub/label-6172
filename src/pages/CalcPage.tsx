@@ -35,6 +35,7 @@ const oils = oilsData as Oil[];
 const defaultValues: CalcFormValues = {
   alkaliType: 'NaOH',
   recipeName: '',
+  recipeNotes: '',
   totalOilWeight: 500,
   superfatPercentage: 5,
   oils: [{ oilId: 'olive', percentage: 100 }],
@@ -87,6 +88,7 @@ export function CalcPage() {
       reset({
         alkaliType: loadedRecipe.alkaliType,
         recipeName: loadedRecipe.recipeName,
+        recipeNotes: loadedRecipe.recipeNotes ?? '',
         totalOilWeight: loadedRecipe.totalOilWeight,
         superfatPercentage: loadedRecipe.superfatPercentage,
         oils: [...loadedRecipe.oils],
@@ -209,6 +211,7 @@ export function CalcPage() {
       oils: values.oils,
       lyeAmount: calc.lyeAmount,
       waterAmount: calc.waterAmount,
+      notes: values.recipeNotes?.trim() || undefined,
     };
 
     const recipes = useRecipeStore.getState().recipes;
@@ -322,6 +325,21 @@ export function CalcPage() {
                   control={control}
                   render={({ field }) => (
                     <Input {...field} placeholder="例如：温和沐浴皂" />
+                  )}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                label="备注（可选）"
+                validateStatus={errors.recipeNotes ? 'error' : undefined}
+                help={errors.recipeNotes?.message}
+              >
+                <Controller
+                  name="recipeNotes"
+                  control={control}
+                  render={({ field }) => (
+                    <Input.TextArea {...field} rows={2} placeholder="例如：适合干性肌肤，冬季使用" maxLength={500} showCount />
                   )}
                 />
               </Form.Item>

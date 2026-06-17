@@ -85,5 +85,7 @@ export interface Recipe {
   oils: OilRatio[];
   lyeAmount: string;
   waterAmount: string;
+  /** 备注，旧数据可能缺失该字段 */
+  notes?: string;
   createdAt: string;
 }
