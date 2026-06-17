@@ -90,15 +90,22 @@ function isValidRecipe(recipe: unknown): recipe is Recipe {
 export interface MergeResult {
   importedCount: number;
   skippedCount: number;
+  importedRecipes: Recipe[];
 }
 
 export function mergeRecipes(existing: Recipe[], incoming: Recipe[]): MergeResult {
   const existingNames = new Set(existing.map((r) => r.name.trim().toLowerCase()));
+  const seenNames = new Set<string>();
   const imported: Recipe[] = [];
   let skippedCount = 0;
 
   for (const recipe of incoming) {
     const normalizedName = recipe.name.trim().toLowerCase();
+    if (seenNames.has(normalizedName)) {
+      skippedCount++;
+      continue;
+    }
+    seenNames.add(normalizedName);
     if (existingNames.has(normalizedName)) {
       skippedCount++;
     } else {
@@ -114,5 +121,6 @@ export function mergeRecipes(existing: Recipe[], incoming: Recipe[]): MergeResul
   return {
     importedCount: imported.length,
     skippedCount,
+    importedRecipes: imported,
   };
 }

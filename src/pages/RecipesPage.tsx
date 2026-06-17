@@ -39,10 +39,6 @@ export function RecipesPage() {
       .join('、');
 
   const handleExport = () => {
-    if (recipes.length === 0) {
-      message.warning('暂无可导出的配方');
-      return;
-    }
     exportRecipesToFile(recipes);
     message.success(`已导出 ${recipes.length} 个配方`);
   };
@@ -59,9 +55,15 @@ export function RecipesPage() {
     try {
       const incoming = await parseImportFile(file);
       const result = importRecipes(incoming);
-      message.success(
-        `导入完成：成功导入 ${result.importedCount} 个，跳过 ${result.skippedCount} 个重复`,
-      );
+      if (result.importedCount === 0) {
+        message.warning(
+          `导入完成：全部 ${result.skippedCount} 个配方因名称重复被跳过`,
+        );
+      } else {
+        message.success(
+          `导入完成：成功导入 ${result.importedCount} 个，跳过 ${result.skippedCount} 个重复`,
+        );
+      }
     } catch (err) {
       message.error(err instanceof Error ? err.message : '导入失败');
     } finally {
@@ -78,7 +80,7 @@ export function RecipesPage() {
         配方列表
       </Typography.Title>
       <Typography.Paragraph type="secondary">
-        已保存的配方会持久化到本地，可随时查看或删除。
+        已保存的配方会持久化到本地，可随时查看或删除。支持「导出全部」将配方导出为 JSON 备份文件，或「从文件导入」将备份中的配方合并写入本地（同名配方将被跳过）。
       </Typography.Paragraph>
 
       <Card>

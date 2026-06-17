@@ -36,21 +36,9 @@ export const useRecipeStore = create<RecipeState>()(
         const existing = get().recipes;
         const result = mergeRecipes(existing, incoming);
         if (result.importedCount > 0) {
-          set((state) => {
-            const existingNames = new Set(
-              state.recipes.map((r) => r.name.trim().toLowerCase()),
-            );
-            const newRecipes = incoming
-              .filter((r) => !existingNames.has(r.name.trim().toLowerCase()))
-              .map((r) => ({
-                ...r,
-                id: crypto.randomUUID(),
-                createdAt: new Date().toISOString(),
-              }));
-            return {
-              recipes: [...newRecipes, ...state.recipes],
-            };
-          });
+          set((state) => ({
+            recipes: [...result.importedRecipes, ...state.recipes],
+          }));
         }
         return result;
       },
