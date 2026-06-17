@@ -3,9 +3,24 @@ import { persist } from 'zustand/middleware';
 import { mergeRecipes, type MergeResult } from '../lib/exportImportUtils';
 import type { OilRatio, Recipe } from '../types';
 
+export interface SaveRecipeOptions {
+  overwriteId?: string;
+  overwriteByName?: boolean;
+}
+
+export interface SaveRecipeResult {
+  type: 'created' | 'updated';
+  recipe: Recipe;
+}
+
 interface RecipeState {
   recipes: Recipe[];
   addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt'>) => void;
+  updateRecipe: (id: string, recipe: Omit<Recipe, 'id' | 'createdAt'>) => Recipe | null;
+  saveRecipe: (
+    recipe: Omit<Recipe, 'id' | 'createdAt'>,
+    options?: SaveRecipeOptions,
+  ) => SaveRecipeResult;
   removeRecipe: (id: string) => void;
   importRecipes: (incoming: Recipe[]) => MergeResult;
 }
@@ -28,6 +43,66 @@ export const useRecipeStore = create<RecipeState>()(
             ...state.recipes,
           ],
         })),
+      updateRecipe: (id, recipe) => {
+        const existing = get().recipes.find((r) => r.id === id);
+        if (!existing) return null;
+        const updated: Recipe = {
+          ...existing,
+          ...recipe,
+          id,
+          createdAt: existing.createdAt,
+        };
+        set((state) => ({
+          recipes: state.recipes.map((r) => (r.id === id ? updated : r)),
+        }));
+        return updated;
+      },
+      saveRecipe: (recipe, options = {}) => {
+        const { overwriteId, overwriteByName } = options;
+        const now = new Date().toISOString();
+
+        if (overwriteId) {
+          const existing = get().recipes.find((r) => r.id === overwriteId);
+          if (existing) {
+            const updated: Recipe = {
+              ...existing,
+              ...recipe,
+              id: overwriteId,
+              createdAt: existing.createdAt,
+            };
+            set((state) => ({
+              recipes: state.recipes.map((r) => (r.id === overwriteId ? updated : r)),
+            }));
+            return { type: 'updated', recipe: updated };
+          }
+        }
+
+        if (overwriteByName) {
+          const existing = get().recipes.find((r) => r.name === recipe.name);
+          if (existing) {
+            const updated: Recipe = {
+              ...existing,
+              ...recipe,
+              id: existing.id,
+              createdAt: existing.createdAt,
+            };
+            set((state) => ({
+              recipes: state.recipes.map((r) => (r.id === existing.id ? updated : r)),
+            }));
+            return { type: 'updated', recipe: updated };
+          }
+        }
+
+        const created: Recipe = {
+          ...recipe,
+          id: crypto.randomUUID(),
+          createdAt: now,
+        };
+        set((state) => ({
+          recipes: [created, ...state.recipes],
+        }));
+        return { type: 'created', recipe: created };
+      },
       removeRecipe: (id) =>
         set((state) => ({
           recipes: state.recipes.filter((r) => r.id !== id),

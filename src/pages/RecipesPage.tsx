@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -10,11 +11,12 @@ import {
   Typography,
   message,
 } from 'antd';
-import { DeleteOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
+import { CalculatorOutlined, DeleteOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
 import { buildOilMap } from '../lib/calc';
 import { exportRecipesToFile, parseImportFile } from '../lib/exportImportUtils';
 import { useRecipeStore } from '../store/recipeStore';
+import { useCalcLoadStore } from '../store/calcLoadStore';
 import type { AlkaliType, Oil } from '../types';
 
 const oils = oilsData as Oil[];
@@ -26,9 +28,11 @@ const alkaliLabel = (type: AlkaliType | undefined) =>
  * 配方列表页面
  */
 export function RecipesPage() {
+  const navigate = useNavigate();
   const recipes = useRecipeStore((s) => s.recipes);
   const removeRecipe = useRecipeStore((s) => s.removeRecipe);
   const importRecipes = useRecipeStore((s) => s.importRecipes);
+  const setLoadedRecipe = useCalcLoadStore((s) => s.setLoadedRecipe);
   const oilMap = useMemo(() => buildOilMap(oils), []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState(false);
@@ -179,21 +183,44 @@ export function RecipesPage() {
                 title: '操作',
                 key: 'action',
                 render: (_: unknown, record: any) => (
-                  <Popconfirm
-                    title="确认删除该配方？"
-                    description={record.name}
-                    onConfirm={() => {
-                      removeRecipe(record.id);
-                      message.success('已删除');
-                    }}
-                    okText="删除"
-                    cancelText="取消"
-                    okButtonProps={{ danger: true }}
-                  >
-                    <Button danger size="small" icon={<DeleteOutlined />}>
-                      删除
+                  <Space size="small">
+                    <Button
+                      type="primary"
+                      size="small"
+                      icon={<CalculatorOutlined />}
+                      onClick={() => {
+                        setLoadedRecipe(
+                          {
+                            recipeName: record.name,
+                            totalOilWeight: record.totalOilWeight,
+                            superfatPercentage: record.superfatPercentage ?? 5,
+                            alkaliType: record.alkaliType ?? 'NaOH',
+                            oils: record.oils,
+                          },
+                          record.id,
+                        );
+                        message.success(`已载入配方「${record.name}」`);
+                        navigate('/calc');
+                      }}
+                    >
+                      载入计算器
                     </Button>
-                  </Popconfirm>
+                    <Popconfirm
+                      title="确认删除该配方？"
+                      description={record.name}
+                      onConfirm={() => {
+                        removeRecipe(record.id);
+                        message.success('已删除');
+                      }}
+                      okText="删除"
+                      cancelText="取消"
+                      okButtonProps={{ danger: true }}
+                    >
+                      <Button danger size="small" icon={<DeleteOutlined />}>
+                        删除
+                      </Button>
+                    </Popconfirm>
+                  </Space>
                 ),
               },
             ]}

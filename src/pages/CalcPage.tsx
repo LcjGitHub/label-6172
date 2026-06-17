@@ -11,20 +11,23 @@ import {
   Form,
   Input,
   InputNumber,
+  Modal,
   Radio,
   Row,
   Select,
   Space,
   Statistic,
   Table,
+  Tag,
   Typography,
   message,
 } from 'antd';
-import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import { DeleteOutlined, ExclamationCircleOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
 import { buildOilMap, calculateBatch, calculateLye, sumPercentages } from '../lib/calc';
 import { calcFormSchema, type CalcFormValues } from '../schemas/calcSchema';
 import { useRecipeStore } from '../store/recipeStore';
+import { useCalcLoadStore } from '../store/calcLoadStore';
 import type { AlkaliType, CalcResult, Oil } from '../types';
 
 const oils = oilsData as Oil[];
@@ -42,17 +45,23 @@ const defaultValues: CalcFormValues = {
  */
 export function CalcPage() {
   const oilMap = useMemo(() => buildOilMap(oils), []);
-  const addRecipe = useRecipeStore((s) => s.addRecipe);
+  const saveRecipe = useRecipeStore((s) => s.saveRecipe);
+  const loadedRecipe = useCalcLoadStore((s) => s.loadedRecipe);
+  const sourceRecipeId = useCalcLoadStore((s) => s.sourceRecipeId);
+  const clearLoadedRecipe = useCalcLoadStore((s) => s.clearLoadedRecipe);
   const [result, setResult] = useState<CalcResult | null>(null);
   const [singleBlockWeight, setSingleBlockWeight] = useState<number | null>(null);
   const [batchCount, setBatchCount] = useState<number | null>(null);
   const hasResultRef = useRef(false);
+  const appliedLoadedRef = useRef(false);
 
   const {
     control,
     handleSubmit,
     watch,
     getValues,
+    reset,
+    setValue,
     formState: { errors },
   } = useForm<CalcFormValues>({
     resolver: zodResolver(calcFormSchema),
@@ -71,6 +80,32 @@ export function CalcPage() {
   const isSumValid = percentageSum.equals(100);
 
   const usedOilIds = watchedOils?.map((o) => o.oilId) ?? [];
+
+  useEffect(() => {
+    if (loadedRecipe && !appliedLoadedRef.current) {
+      appliedLoadedRef.current = true;
+      reset({
+        alkaliType: loadedRecipe.alkaliType,
+        recipeName: loadedRecipe.recipeName,
+        totalOilWeight: loadedRecipe.totalOilWeight,
+        superfatPercentage: loadedRecipe.superfatPercentage,
+        oils: [...loadedRecipe.oils],
+      });
+      try {
+        const calc = calculateLye(
+          loadedRecipe.totalOilWeight,
+          loadedRecipe.oils,
+          oilMap,
+          loadedRecipe.superfatPercentage,
+          loadedRecipe.alkaliType,
+        );
+        setResult(calc);
+        hasResultRef.current = true;
+      } catch (e) {
+        // ignore calc errors on load
+      }
+    }
+  }, [loadedRecipe, reset, oilMap, setValue]);
 
   useEffect(() => {
     if (hasResultRef.current) {
@@ -130,7 +165,8 @@ export function CalcPage() {
       message.warning('保存前请填写配方名称');
       return;
     }
-    addRecipe({
+
+    const recipeData = {
       name,
       totalOilWeight: values.totalOilWeight,
       superfatPercentage: values.superfatPercentage,
@@ -138,7 +174,50 @@ export function CalcPage() {
       oils: values.oils,
       lyeAmount: calc.lyeAmount,
       waterAmount: calc.waterAmount,
-    });
+    };
+
+    const recipes = useRecipeStore.getState().recipes;
+    const existingByName = recipes.find((r) => r.name === name);
+    const isSourceMatch = sourceRecipeId && existingByName?.id === sourceRecipeId;
+
+    if (sourceRecipeId) {
+      const result = saveRecipe(recipeData, { overwriteId: sourceRecipeId });
+      clearLoadedRecipe();
+      appliedLoadedRef.current = false;
+      message.success(
+        result.type === 'updated' ? `配方「${name}」已覆盖更新` : `配方「${name}」已保存`,
+      );
+      return;
+    }
+
+    if (existingByName && !isSourceMatch) {
+      Modal.confirm({
+        title: '配方名称已存在',
+        icon: <ExclamationCircleOutlined />,
+        content: (
+          <Space direction="vertical">
+            <div>已存在同名配方「{name}」，是否覆盖？</div>
+            <Tag color="orange">选择「覆盖」将更新原有配方数据</Tag>
+          </Space>
+        ),
+        okText: '覆盖保存',
+        okButtonProps: { danger: true },
+        cancelText: '另存为新配方',
+        onOk: () => {
+          saveRecipe(recipeData, { overwriteId: existingByName.id });
+          message.success(`配方「${name}」已覆盖更新`);
+        },
+        onCancel: () => {
+          saveRecipe(recipeData);
+          message.success(`配方「${name}」已另存为新配方`);
+        },
+      });
+      return;
+    }
+
+    saveRecipe(recipeData);
+    clearLoadedRecipe();
+    appliedLoadedRef.current = false;
     message.success('配方已保存');
   });
 
@@ -147,6 +226,39 @@ export function CalcPage() {
       <Typography.Title level={3} style={{ margin: 0 }}>
         碱量计算器
       </Typography.Title>
+
+      {loadedRecipe && (
+        <Alert
+          type="info"
+          showIcon
+          message={
+            <Space>
+              <span>
+                已载入配方：<strong>{loadedRecipe.recipeName}</strong>
+              </span>
+              <Tag color="blue">总油重 {loadedRecipe.totalOilWeight} g</Tag>
+              <Tag color="orange">超脂 {loadedRecipe.superfatPercentage}%</Tag>
+              <Tag color="green">
+                碱类型 {loadedRecipe.alkaliType === 'NaOH' ? '氢氧化钠' : '氢氧化钾'}
+              </Tag>
+            </Space>
+          }
+          description="表单已预填配方数据，您可在修改后重新计算或保存。保存时默认覆盖原配方。"
+          action={
+            <Button
+              size="small"
+              onClick={() => {
+                clearLoadedRecipe();
+                appliedLoadedRef.current = false;
+                message.info('已取消载入状态');
+              }}
+            >
+              取消载入
+            </Button>
+          }
+        />
+      )}
+
       <Typography.Paragraph type="secondary">
         选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算碱用量。支持氢氧化钠和氢氧化钾两种碱类型，氢氧化钾用量 = 氢氧化钠用量 × 0.7。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
       </Typography.Paragraph>
