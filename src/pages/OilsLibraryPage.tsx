@@ -1,12 +1,5 @@
 import { useMemo, useState } from 'react';
-import {
-  Card,
-  Empty,
-  Input,
-  Space,
-  Table,
-  Typography,
-} from 'antd';
+import { Card, Empty, Input, Space, Table, Typography } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
 import type { Oil } from '../types';
@@ -68,9 +61,7 @@ export function OilsLibraryPage() {
                 dataIndex: 'sapValue',
                 key: 'sapValue',
                 width: 240,
-                render: (v: number) => (
-                  <Typography.Text code>{v} g NaOH / g 油脂</Typography.Text>
-                ),
+                render: (v: number) => <Typography.Text code>{v} g NaOH / g 油脂</Typography.Text>,
               },
             ]}
           />

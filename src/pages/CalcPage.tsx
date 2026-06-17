@@ -20,7 +20,13 @@ import {
   Typography,
   message,
 } from 'antd';
-import { DeleteOutlined, ExclamationCircleOutlined, PartitionOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  ExclamationCircleOutlined,
+  PartitionOutlined,
+  PlusOutlined,
+  SaveOutlined,
+} from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
 import {
   buildOilMap,
@@ -284,9 +290,7 @@ export function CalcPage() {
               </span>
               <Tag color="blue">总油重 {loadedRecipe.totalOilWeight} 克</Tag>
               <Tag color="orange">超脂 {loadedRecipe.superfatPercentage}%</Tag>
-              <Tag color="green">
-                碱类型 {getAlkaliLabel(loadedRecipe.alkaliType)}
-              </Tag>
+              <Tag color="green">碱类型 {getAlkaliLabel(loadedRecipe.alkaliType)}</Tag>
               {loadedRecipe.recipeNotes && loadedRecipe.recipeNotes.trim() && (
                 <Tag color="purple">备注：{loadedRecipe.recipeNotes.trim()}</Tag>
               )}
@@ -312,7 +316,11 @@ export function CalcPage() {
       )}
 
       <Typography.Paragraph type="secondary">
-        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock 皂化值计算碱用量。支持氢氧化钠和氢氧化钾两种碱类型，氢氧化钾用量 = 氢氧化钠用量 × 0.7。可设置 0%~20% 的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。添加两种及以上油脂后可点击「均分比例」按钮自动平均分配比例，合计恰好为 100%。保存配方时可填写可选备注，方便后续筛选和辨识。您也可以从「配方列表」页点击「载入计算器」，将已有配方的名称、总油重、油脂配比、备注等自动预填到本页表单，在此基础上修改后重新计算或保存。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
+        选择多种油脂并填写比例（合计 100%），输入总油重后按 Mock
+        皂化值计算碱用量。支持氢氧化钠和氢氧化钾两种碱类型，氢氧化钾用量 = 氢氧化钠用量 ×
+        0.7。可设置 0%~20%
+        的超脂比例，系统将按比例从原始碱量中扣减相应碱量，使成品保留更多未皂化油脂，滋润肌肤。添加两种及以上油脂后可点击「均分比例」按钮自动平均分配比例，合计恰好为
+        100%。保存配方时可填写可选备注，方便后续筛选和辨识。您也可以从「配方列表」页点击「载入计算器」，将已有配方的名称、总油重、油脂配比、备注等自动预填到本页表单，在此基础上修改后重新计算或保存。完成碱量计算后，可在下方批量换算区块输入单块成品重量与计划制作块数，按块数等比放大当前配方的总油重、碱量、建议水量及各油脂明细重量，换算过程全程使用高精度小数计算。
       </Typography.Paragraph>
 
       <Card title="配方参数">
@@ -342,9 +350,7 @@ export function CalcPage() {
                 <Controller
                   name="recipeName"
                   control={control}
-                  render={({ field }) => (
-                    <Input {...field} placeholder="例如：温和沐浴皂" />
-                  )}
+                  render={({ field }) => <Input {...field} placeholder="例如：温和沐浴皂" />}
                 />
               </Form.Item>
             </Col>
@@ -359,12 +365,7 @@ export function CalcPage() {
                   name="totalOilWeight"
                   control={control}
                   render={({ field }) => (
-                    <InputNumber
-                      {...field}
-                      min={1}
-                      style={{ width: '100%' }}
-                      addonAfter="g"
-                    />
+                    <InputNumber {...field} min={1} style={{ width: '100%' }} addonAfter="g" />
                   )}
                 />
               </Form.Item>
@@ -381,7 +382,13 @@ export function CalcPage() {
                   name="recipeNotes"
                   control={control}
                   render={({ field }) => (
-                    <Input.TextArea {...field} rows={2} placeholder="例如：适合干性肌肤，冬季使用" maxLength={500} showCount />
+                    <Input.TextArea
+                      {...field}
+                      rows={2}
+                      placeholder="例如：适合干性肌肤，冬季使用"
+                      maxLength={500}
+                      showCount
+                    />
                   )}
                 />
               </Form.Item>
@@ -453,8 +460,7 @@ export function CalcPage() {
                         options={oils.map((oil) => ({
                           value: oil.id,
                           label: `${oil.name}（SAP ${oil.sapValue}）`,
-                          disabled:
-                            usedOilIds.includes(oil.id) && f.value !== oil.id,
+                          disabled: usedOilIds.includes(oil.id) && f.value !== oil.id,
                         }))}
                       />
                     )}
@@ -513,7 +519,11 @@ export function CalcPage() {
             >
               添加油脂
             </Button>
-            <Button icon={<PartitionOutlined />} onClick={onEvenDistribute} disabled={fields.length < 2}>
+            <Button
+              icon={<PartitionOutlined />}
+              onClick={onEvenDistribute}
+              disabled={fields.length < 2}
+            >
               均分比例
             </Button>
             <Button type="primary" htmlType="submit">

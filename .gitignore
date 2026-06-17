@@ -124,6 +124,22 @@ tsconfig.*.tsbuildinfo
 .vite/
 .vite-inspector/
 
+# ESLint cache
+.eslintcache
+
+# Prettier cache
+.prettiercache
+
+# Build output
+dist/
+dist-ssr/
+build/
+out/
+
+# Local editor files
+.vite/
+*.local
+
 # Archives (optional local bundles)
 *.zip
 *.tar

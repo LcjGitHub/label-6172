@@ -12,9 +12,7 @@ function renderResultContent<T extends CalcResult | BatchCalcResult>(data: T, is
   const alkaliLabel = getAlkaliLabel(alkaliType);
   const alkaliSuffix = getAlkaliSuffix(alkaliType);
 
-  const lyeBeforeTitle = isBatch
-    ? `批量扣减前${alkaliLabel}量`
-    : `扣减前${alkaliLabel}量`;
+  const lyeBeforeTitle = isBatch ? `批量扣减前${alkaliLabel}量` : `扣减前${alkaliLabel}量`;
   const lyeDeductionTitle = `${alkaliLabel}超脂扣减量`;
   const lyeFinalTitle = isBatch
     ? `批量扣减后${alkaliLabel}量（最终）`
@@ -23,19 +21,13 @@ function renderResultContent<T extends CalcResult | BatchCalcResult>(data: T, is
   const oilWeightTitle = isBatch ? '批量总油重' : '总油重';
   const waterTitle = isBatch ? '批量建议水量' : '建议水量（Mock 2.5×最终碱量）';
   const weightColumnTitle = isBatch ? '批量重量（克）' : '重量（克）';
-  const lyeColumnTitle = isBatch
-    ? `批量贡献${alkaliLabel}量（克）`
-    : `贡献${alkaliLabel}量（克）`;
+  const lyeColumnTitle = isBatch ? `批量贡献${alkaliLabel}量（克）` : `贡献${alkaliLabel}量（克）`;
 
   return (
     <>
       <Row gutter={24} style={{ marginBottom: 16 }}>
         <Col xs={24} sm={8}>
-          <Statistic
-            title={lyeBeforeTitle}
-            value={data.lyeBeforeSuperfat}
-            suffix={alkaliSuffix}
-          />
+          <Statistic title={lyeBeforeTitle} value={data.lyeBeforeSuperfat} suffix={alkaliSuffix} />
         </Col>
         <Col xs={24} sm={8}>
           <Statistic
@@ -99,11 +91,7 @@ function renderResultContent<T extends CalcResult | BatchCalcResult>(data: T, is
  */
 export function CalcResultDisplay({ result }: { result: CalcResult }) {
   const alkaliLabel = getAlkaliLabel(result.alkaliType);
-  return (
-    <Card title={`计算结果（${alkaliLabel}）`}>
-      {renderResultContent(result, false)}
-    </Card>
-  );
+  return <Card title={`计算结果（${alkaliLabel}）`}>{renderResultContent(result, false)}</Card>;
 }
 
 /**

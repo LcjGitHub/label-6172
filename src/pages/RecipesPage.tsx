@@ -13,7 +13,14 @@ import {
   Typography,
   message,
 } from 'antd';
-import { CalculatorOutlined, CopyOutlined, DeleteOutlined, DownloadOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
+import {
+  CalculatorOutlined,
+  CopyOutlined,
+  DeleteOutlined,
+  DownloadOutlined,
+  SearchOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import oilsData from '../mock/oils.json';
 import { buildOilMap, getAlkaliLabel } from '../lib/calc';
 import { exportRecipesToFile, parseImportFile } from '../lib/exportImportUtils';
@@ -69,9 +76,7 @@ export function RecipesPage() {
       const incoming = await parseImportFile(file);
       const result = importRecipes(incoming);
       if (result.importedCount === 0) {
-        message.warning(
-          `导入完成：全部 ${result.skippedCount} 个配方因名称重复被跳过`,
-        );
+        message.warning(`导入完成：全部 ${result.skippedCount} 个配方因名称重复被跳过`);
       } else if (result.skippedCount === 0) {
         message.success(`导入完成：成功导入 ${result.importedCount} 个`);
       } else {
@@ -121,11 +126,7 @@ export function RecipesPage() {
             >
               导出全部
             </Button>
-            <Button
-              icon={<UploadOutlined />}
-              onClick={handleImportClick}
-              loading={importing}
-            >
+            <Button icon={<UploadOutlined />} onClick={handleImportClick} loading={importing}>
               从文件导入
             </Button>
           </Space>

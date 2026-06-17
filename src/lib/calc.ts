@@ -40,10 +40,7 @@ export function validatePercentageSum(oils: OilRatio[]): boolean {
  * @param oils - 油脂配比列表
  */
 export function sumPercentages(oils: OilRatio[]): Decimal {
-  return oils.reduce(
-    (acc, item) => acc.plus(new Decimal(item.percentage || 0)),
-    new Decimal(0),
-  );
+  return oils.reduce((acc, item) => acc.plus(new Decimal(item.percentage || 0)), new Decimal(0));
 }
 
 /**
@@ -66,7 +63,8 @@ export function calculateLye(
 ): CalcResult {
   const total = new Decimal(totalOilWeight);
   const superfatPct = new Decimal(superfatPercentage);
-  const conversionFactor = alkaliType === 'KOH' ? new Decimal(KOH_CONVERSION_FACTOR) : new Decimal(1);
+  const conversionFactor =
+    alkaliType === 'KOH' ? new Decimal(KOH_CONVERSION_FACTOR) : new Decimal(1);
   let totalLye = new Decimal(0);
 
   const oilDetails = oils.map((item) => {
@@ -160,9 +158,7 @@ export function calculateBatch(
     .plus(new Decimal(calcResult.waterAmount));
 
   const desiredTotal = new Decimal(singleBlockWeight).mul(batchCount);
-  const scaleFactor = currentTotal.equals(0)
-    ? new Decimal(0)
-    : desiredTotal.div(currentTotal);
+  const scaleFactor = currentTotal.equals(0) ? new Decimal(0) : desiredTotal.div(currentTotal);
 
   const totalOilWeight = new Decimal(calcResult.totalOilWeight).mul(scaleFactor);
   const lyeBeforeSuperfat = new Decimal(calcResult.lyeBeforeSuperfat).mul(scaleFactor);

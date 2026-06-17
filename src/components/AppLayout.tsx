@@ -1,9 +1,5 @@
 import { Layout, Menu, Typography } from 'antd';
-import {
-  CalculatorOutlined,
-  DatabaseOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons';
+import { CalculatorOutlined, DatabaseOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
 const { Header, Content } = Layout;
